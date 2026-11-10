@@ -75,3 +75,7 @@ end $$;
 
 grant execute on function mis_partes(text) to anon;
 notify pgrst, 'reload schema';
+
+-- Tipo de bloqueo (Chio 10/11): cierre | propietario | mantenimiento | obra.
+-- propietario => tarea 'activar' el día que empieza y 'salida' el día que sale el propietario.
+alter table bloqueos add column if not exists tipo text not null default 'cierre';
