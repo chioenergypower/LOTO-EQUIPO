@@ -26,7 +26,7 @@ create table if not exists tareas_limpieza (
   id bigint generated always as identity primary key,
   fecha date not null,
   apartamento text not null references apartamentos(id),
-  tipo text not null check (tipo in ('salida','entrada','salida-entrada','activar')),
+  tipo text not null check (tipo in ('salida','entrada','salida-entrada','activar','apagar','obra'))  -- apagar = no se limpia, solo se apaga; obra = limpieza sin salida de cliente,
   hora_salida text, hora_entrada text,
   energia text check (energia in ('off','on','router')),
   peticiones jsonb not null default '[]',          -- ["Cuna","Trona"]

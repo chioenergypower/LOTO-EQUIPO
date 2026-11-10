@@ -138,6 +138,21 @@ begin
   insert into mensajes(de, para, apartamento, texto) values (yo.id, 'recepcion', nullif(p_apartamento, ''), left(trim(p_texto), 1000));
 end $$;
 
+-- Agenda: lo que viene (hoy + 6 semanas), SIN códigos. Para la vista semanal y el calendario.
+create or replace function mi_agenda(p_k text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare yo equipo; h date := _hoy();
+begin
+  yo := _quien(p_k);
+  return jsonb_build_object('hoy', h, 'hasta', h + 41,
+    'tareas', coalesce((select jsonb_agg(jsonb_build_object(
+        'fecha', t.fecha, 'apartamento', t.apartamento, 'tipo', t.tipo, 'edificio', a.edificio,
+        'hora_salida', t.hora_salida, 'hora_entrada', t.hora_entrada, 'minutos', a.minutos, 'nota', t.nota
+      ) order by t.fecha, a.edificio, t.apartamento)
+      from tareas_limpieza t join apartamentos a on a.id = t.apartamento
+      where t.fecha between h and h + 41 and (yo.id = any(t.personas) or yo.id = any(t.solo_camas))), '[]'));
+end $$;
+
 -- ───────── MANTENIMIENTO ─────────
 -- Los obreros ven los partes abiertos (sin códigos: la puerta la abre limpieza) y los suyos cerrados del mes.
 create or replace function mis_partes(p_k text) returns jsonb
@@ -184,6 +199,6 @@ end $$;
 revoke all on function _quien(text) from public, anon, authenticated;
 grant execute on function mi_dia(text), jornada(text, text), tarea(text, bigint, text), peticion(text, bigint, text, boolean),
   reposicion(text, text, text, numeric, boolean), reposicion_llevada(text, bigint), incidencia(text, text, text, boolean),
-  falta_material(text, text), mensaje(text, text, text), mis_partes(text),
+  falta_material(text, text), mensaje(text, text, text), mis_partes(text), mi_agenda(text),
   parte_actualizar(text, bigint, text, numeric, text, numeric, text) to anon;
 notify pgrst, 'reload schema';
