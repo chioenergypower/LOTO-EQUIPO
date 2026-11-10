@@ -112,12 +112,15 @@ begin perform _quien(p_k); update reposiciones set hecho = now(), pendiente = fa
 
 create or replace function incidencia(p_k text, p_apartamento text, p_descripcion text, p_urgente boolean) returns void
 language plpgsql security definer set search_path = public as $$
-declare yo equipo;
+declare yo equipo; obrero text;
 begin
   yo := _quien(p_k);
   if length(trim(coalesce(p_descripcion, ''))) = 0 then raise exception 'falta_descripcion'; end if;
-  insert into partes(apartamento, descripcion, urgente, reporta)
-  values (p_apartamento, left(trim(p_descripcion), 600), coalesce(p_urgente, false), yo.nombre);
+  -- Si solo hay un obrero de mantenimiento activo, la avería se le asigna directamente.
+  select case when count(*) = 1 then min(id) end into obrero from equipo where rol = 'mantenimiento' and activo;
+  insert into partes(apartamento, descripcion, urgente, reporta, asignado, estado)
+  values (p_apartamento, left(trim(p_descripcion), 600), coalesce(p_urgente, false), yo.nombre, obrero,
+          case when obrero is null then 'pendiente' else 'asignado' end);
 end $$;
 
 create or replace function falta_material(p_k text, p_texto text) returns void
