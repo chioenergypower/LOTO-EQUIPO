@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Loto Mantenimiento</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap">
+<style>
+:root{--bg:#f0f2f5;--card:#fff;--fg:#1a1d23;--mt:#6b7280;--ac:#2563eb;--acl:#dbeafe;--acd:#1d4ed8;--ok:#059669;--okl:#d1fae5;--wn:#b45309;--wnl:#fef3c7;--dn:#dc2626;--dnl:#fee2e2;--info:#0369a1;--infol:#e0f2fe;--bd:#e5e7eb;--sh:0 1px 3px rgba(0,0,0,.08);--r:12px;--rs:8px;--fd:'Space Grotesk',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--w:1120px}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#1a1d27;--fg:#e8eaed;--mt:#9ca3af;--ac:#60a5fa;--acl:#1e3a5f;--acd:#3b82f6;--ok:#34d399;--okl:#064e3b;--wn:#fbbf24;--wnl:#78350f;--dn:#f87171;--dnl:#7f1d1d;--info:#38bdf8;--infol:#0c4a6e;--bd:#2d3140;--sh:0 1px 3px rgba(0,0,0,.3);color-scheme:dark}}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--fb);font-size:14px;max-width:var(--w);margin:0 auto;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--fd)}
+[hidden]{display:none!important}
+button{font-family:var(--fb);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.center{min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;text-align:center}
+.center h1{font-size:24px}.center p{color:var(--mt);max-width:320px;line-height:1.5}
+.bar{position:sticky;top:0;background:var(--ac);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;margin:0 -16px;display:flex;justify-content:space-between;align-items:center;z-index:5}
+.bar h2{font-size:16px}.bar .dt{font-size:11px;opacity:.9}
+.bar .st{font-size:11px;background:rgba(255,255,255,.2);padding:4px 9px;border-radius:14px}
+.shift{background:var(--ac);color:#fff;border-radius:var(--r);padding:18px;margin:12px 0;text-align:center}
+.shift h3{font-size:12px;opacity:.9;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.shift .tm{font-family:var(--fd);font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
+.shift .sbtn{background:#fff;color:var(--acd);border:none;border-radius:24px;padding:12px 28px;font-size:15px;font-weight:700;margin-top:10px}
+.shift .sbtn.end{background:var(--dnl);color:var(--dn)}
+.shift.done{background:var(--card);color:var(--fg)}.shift.done .tm{color:var(--ok)}
+.pend{background:var(--wnl);border:2px solid var(--wn);border-radius:var(--r);padding:12px;margin-bottom:12px}
+.pend h4{font-size:13px;color:var(--wn);margin-bottom:6px}.pend li{font-size:13px;padding:4px 0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pend ul{list-style:none;padding:0}
+.mini{background:var(--ok);color:#fff;border:none;border-radius:12px;padding:4px 10px;font-size:11px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.stt{background:var(--card);border-radius:var(--rs);padding:10px 6px;text-align:center;box-shadow:var(--sh)}
+.stt .n{font-family:var(--fd);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}.stt .l{font-size:10px;color:var(--mt);text-transform:uppercase;letter-spacing:.5px}
+.sec{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--mt);margin:16px 0 8px;font-weight:600}
+.apt{background:var(--card);border-radius:var(--r);padding:12px;margin-bottom:10px;box-shadow:var(--sh);border-left:4px solid var(--bd)}
+.apt.t-salida-entrada{border-left-color:var(--dn)}.apt.t-salida{border-left-color:var(--wn)}.apt.t-entrada,.apt.t-activar{border-left-color:var(--ok)}.apt.t-apagar{border-left-color:#b91c1c}.apt.t-obra{border-left-color:var(--info)}.apt.dn{opacity:.55}
+.apt-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px}
+.apt-n{font-family:var(--fd);font-size:17px;font-weight:700}
+.badge{font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:14px;letter-spacing:.5px;white-space:nowrap}
+.b-salida-entrada{background:var(--dnl);color:var(--dn)}.b-salida{background:var(--wnl);color:var(--wn)}.b-entrada,.b-activar{background:var(--okl);color:var(--ok)}.b-apagar{background:#b91c1c;color:#fff}.b-obra{background:var(--infol);color:var(--info)}
+.loc{font-size:12px;color:var(--mt);margin-bottom:6px}
+.code{background:var(--acl);color:var(--ac);font-family:var(--fd);font-size:15px;font-weight:700;padding:5px 10px;border-radius:var(--rs);display:inline-block;letter-spacing:2px;margin-bottom:6px}
+.pwr{padding:11px;border-radius:var(--rs);text-align:center;font-family:var(--fd);font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;color:#fff}
+.pwr.off{background:#b91c1c}.pwr.on{background:#047857}.pwr.router{background:#0369a1}
+.reqs,.llevar,.nota{border-radius:var(--rs);padding:8px 10px;margin-bottom:8px;font-size:13px}
+.reqs{background:var(--infol)}.reqs label{display:flex;align-items:center;gap:8px;padding:3px 0}.reqs input{width:18px;height:18px;accent-color:var(--ok)}
+.llevar{background:var(--wnl);color:var(--wn);font-weight:700}.nota{background:var(--bg)}
+.tr{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center}
+.btn{border:none;border-radius:var(--rs);padding:9px 12px;font-size:13px;font-weight:600;flex:1;min-width:0;text-align:center;color:#fff}
+.btn:disabled{opacity:.5}
+.bstart{background:#047857}.bstop{background:#b91c1c}.binc{background:#b45309}.brep{background:#1d4ed8}.bmsg{background:#0369a1}.bgrey{background:var(--bd);color:var(--fg)}
+.tdisp{font-variant-numeric:tabular-nums;font-family:var(--fd);font-size:14px;font-weight:700;color:var(--ok)}.tdisp.slow{color:var(--wn)}.tdisp.vslow{color:var(--dn)}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:var(--w);background:var(--card);border-top:1px solid var(--bd);display:flex;padding:4px 0 max(4px,env(safe-area-inset-bottom,0px));z-index:5}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border:none;background:none;color:var(--mt);font-size:10px;font-weight:500}.nb.act{color:var(--ac)}.nb .ni{font-size:18px}
+.tab{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px;align-items:start}.grid .apt{margin-bottom:0;min-width:0}
+#shiftEl,#pendEl,.stats,#tMat,#tHrs,#tMsg,#tSem{max-width:640px;margin-left:auto;margin-right:auto}
+@media(min-width:700px){body{font-size:15px}.bnav{border:1px solid var(--bd);border-bottom:none;border-radius:var(--r) var(--r) 0 0}.nb{font-size:12px}.nb .ni{font-size:20px}}
+.fc{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--sh);margin:12px 0}.fc h3{font-size:15px;margin-bottom:10px}
+.fi{width:100%;padding:10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:var(--fb);font-size:14px;background:var(--bg);color:var(--fg);margin-bottom:8px}
+.bsub{background:var(--ac);color:#fff;width:100%;border:none;border-radius:var(--rs);padding:11px;font-size:14px;font-weight:600}
+.blink{background:none;border:none;color:var(--mt);width:100%;padding:10px;font-size:13px}
+.il{list-style:none;padding:0}.il li{padding:8px 4px;border-bottom:1px solid var(--bd);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:6px}.il li:last-child{border:none}
+.tag{font-size:10px;background:var(--acl);color:var(--ac);padding:2px 7px;border-radius:8px;font-weight:600;white-space:nowrap}
+.hr{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bd);font-size:13px}.hr:last-child{border:none}
+.htot{font-family:var(--fd);font-size:28px;font-weight:800;color:var(--ac);text-align:center;margin:8px 0 2px}
+.heur{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--ok);text-align:center;margin-bottom:10px}
+.msg{padding:9px 11px;margin-bottom:6px;border-radius:var(--rs);font-size:13px;line-height:1.4}
+.msg.out{background:var(--okl)}.msg.in{background:var(--acl)}.msg .h{font-size:11px;color:var(--mt);margin-bottom:2px;display:flex;justify-content:space-between}
+.toast{position:fixed;top:calc(70px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:24px;font-size:13px;font-weight:600;z-index:40;opacity:0;transition:opacity .25s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}.toast.show{opacity:1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--card);border-radius:var(--r);padding:20px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto}
+.modal h3{font-size:18px;margin-bottom:12px;text-align:center}
+.chk{padding:9px 0;border-bottom:1px solid var(--bd);font-size:14px;display:flex;align-items:center;gap:10px}.chk input{width:20px;height:20px;accent-color:var(--ok);flex:none}
+.wd{padding:10px 0;border-bottom:1px solid var(--bd)}.wd:last-child{border:none}
+.wh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}.wh b{font-family:var(--fd);font-size:15px;display:inline-block}.wh b::first-letter{text-transform:uppercase}.wh span{font-size:12px;color:var(--mt);text-align:right}
+.wd.hoy .wh b{color:var(--ac)}.libre{font-size:13px;color:var(--ok);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{font-size:12px;font-weight:600;padding:4px 9px;border-radius:14px;line-height:1.3}
+.c-salida{background:var(--wnl);color:var(--wn)}.c-salida-entrada{background:var(--dnl);color:var(--dn)}.c-entrada,.c-activar{background:var(--okl);color:var(--ok)}.c-apagar{background:#b91c1c;color:#fff}.c-obra{background:var(--infol);color:var(--info)}
+.calt{font-family:var(--fd);font-size:15px;font-weight:700;text-transform:capitalize;margin:14px 0 6px}.calt:first-of-type{margin-top:0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.cal .dh{font-size:10px;color:var(--mt);text-align:center;font-weight:600;padding:2px 0}
+.cd{border:1.5px solid transparent;border-radius:var(--rs);background:var(--bg);color:var(--fg);padding:5px 0 4px;min-height:46px;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.cd small{font-size:10px;font-weight:700}.cd.w{background:var(--acl);color:var(--ac)}.cd.l small{color:var(--ok)}.cd.p{opacity:.4}.cd.x{opacity:.45}.cd.t{border-color:var(--ac)}.cd.s{border-color:var(--fg)}
+.leg{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--mt);margin-top:10px}
+.empty{text-align:center;color:var(--mt);padding:26px 0;line-height:1.5}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+</style><style>
+.fil{display:flex;gap:6px;overflow-x:auto;padding:10px 0 2px}.fil button{flex:none;border:1.5px solid var(--bd);background:var(--card);color:var(--fg);border-radius:16px;padding:6px 12px;font-size:12px;font-weight:600}.fil button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.apt.urg{border-left-color:var(--dn)}.apt.cur{border-left-color:var(--ac)}.apt.pen{border-left-color:var(--wn)}
+.b-urg{background:var(--dn);color:#fff}.b-pen{background:var(--wnl);color:var(--wn)}.b-cur{background:var(--acl);color:var(--ac)}.b-fin{background:var(--okl);color:var(--ok)}
+.desc{font-size:14px;line-height:1.45;margin:6px 0 8px}.nt{font-size:12px;color:var(--mt);border-left:3px solid var(--bd);padding:2px 0 2px 8px;margin:4px 0}
+.aviso{background:var(--infol);color:var(--info);border-radius:var(--rs);padding:9px 11px;font-size:12px;line-height:1.45;margin:12px 0}
+label.lb{display:block;font-size:12px;font-weight:600;color:var(--mt);margin:2px 0 4px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast" role="status"></div>
+<div id="gate" class="center"><div style="font-size:44px">🔧</div><h1>Loto Mantenimiento</h1><p id="gateTxt">Cargando los partes…</p></div>
+<div id="app" hidden>
+  <div class="bar"><div><h2 id="uName"></h2><div class="dt" id="uDate"></div></div><span class="st" id="sync">Al día</span></div>
+  <div class="tab" id="tPar">
+    <div class="aviso">🔑 El día de salida de un cliente solo se puede entrar de <b>11:00 a 17:00</b>. La puerta la abre el equipo de limpieza.</div>
+    <div class="stats" id="statsEl"></div>
+    <button class="bsub" data-act="nuevo" style="max-width:640px;display:block;margin:0 auto 4px">➕ Avisar de una avería nueva</button>
+    <div class="fil" id="filEl"></div>
+    <div id="parEl"></div>
+  </div>
+  <div class="tab" id="tFin" hidden><div class="fc"><h3>✅ Terminados este mes</h3><div id="finEl"></div></div></div>
+  <div class="tab" id="tHrs" hidden><div class="fc"><h3>Tus horas de este mes</h3><div class="htot" id="hTot"></div><div class="heur" id="hEur"></div><div id="hDet"></div></div></div>
+  <nav class="bnav">
+    <button class="nb act" data-tab="tPar"><span class="ni">🔧</span>Partes</button>
+    <button class="nb" data-tab="tFin"><span class="ni">✅</span>Terminados</button>
+    <button class="nb" data-tab="tHrs"><span class="ni">⏱️</span>Mis horas</button>
+  </nav>
+</div>
+<div id="modal" hidden></div>
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script>
+"use strict";
+var D=null,BUSY=false,MOD=null,FIL='Todos';
+var DAY=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],MON=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var EST={pendiente:['Pendiente','pen'],asignado:['Asignado','pen'],en_curso:['En curso','cur'],terminado:['Terminado','fin']};
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(function(){t.classList.remove('show')},3000)}
+function fecha(ts){var d=new Date(ts);return d.getDate()+' '+MON[d.getMonth()].slice(0,3)}
+function eur(n){return (+n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'}
+function num(v){return parseFloat(String(v||'0').replace(',','.'))||0}
+function gate(txt){$('app').hidden=true;$('gate').hidden=false;$('gateTxt').textContent=txt}
+async function load(silent){
+  if(!lotoClave()){gate('Abre esta página con tu enlace personal. Si no lo tienes, pídeselo a Recepción.');return}
+  try{D=await rpc('mis_partes');$('gate').hidden=true;$('app').hidden=false;$('sync').textContent='Al día';render()}
+  catch(e){
+    if(e.codigo==='enlace_no_valido'){lotoOlvidar();gate('Este enlace ya no es válido. Pide uno nuevo a Recepción.')}
+    else if(!D)gate('No hay conexión. Comprueba la cobertura; la página volverá a intentarlo sola.');
+    else{$('sync').textContent='Sin conexión';if(!silent)toast('Sin conexión. Inténtalo otra vez.')}
+  }
+}
+async function act(fn,args,okMsg){
+  if(BUSY)return false;BUSY=true;$('sync').textContent='Guardando…';
+  try{await rpc(fn,args);if(okMsg)toast(okMsg);BUSY=false;await load(true);return true}
+  catch(e){BUSY=false;$('sync').textContent='Sin guardar';toast(e.codigo==='sin_conexion'?'No se ha guardado: no hay conexión. Vuelve a pulsar.':'No se ha podido guardar. Avisa a Recepción.');return false}
+}
+function parte(id){return D.partes.filter(function(p){return p.id===+id})[0]}
+function render(){
+  var d=new Date();$('uName').textContent='¡Hola, '+D.yo.nombre+'!';$('uDate').textContent=DAY[d.getDay()]+' '+d.getDate()+' de '+MON[d.getMonth()];
+  var ab=D.partes.filter(function(p){return p.estado!=='terminado'}),fi=D.partes.filter(function(p){return p.estado==='terminado'});
+  $('statsEl').innerHTML='<div class="stt"><div class="n">'+ab.length+'</div><div class="l">Abiertos</div></div><div class="stt"><div class="n" style="color:var(--dn)">'+ab.filter(function(p){return p.urgente}).length+'</div><div class="l">Urgentes</div></div><div class="stt"><div class="n" style="color:var(--ac)">'+ab.filter(function(p){return p.mio}).length+'</div><div class="l">Míos</div></div>';
+  var eds=['Todos','Míos'];ab.forEach(function(p){if(p.edificio&&eds.indexOf(p.edificio)<0)eds.push(p.edificio)});
+  if(eds.indexOf(FIL)<0)FIL='Todos';
+  $('filEl').innerHTML=eds.map(function(e){return'<button class="'+(e===FIL?'on':'')+'" data-fil="'+esc(e)+'">'+esc(e)+'</button>'}).join('');
+  var vis=ab.filter(function(p){return FIL==='Todos'||(FIL==='Míos'?p.mio:p.edificio===FIL)});
+  $('parEl').innerHTML=vis.length?'<div class="grid">'+vis.map(card).join('')+'</div>':'<div class="empty">'+(ab.length?'No hay partes en este filtro.':'🎉 No hay averías pendientes.')+'</div>';
+  $('finEl').innerHTML=fi.length?fi.map(function(p){return'<div class="hr"><span><b>'+esc(p.apartamento)+'</b> · '+esc(p.descripcion)+'<br><span style="color:var(--mt);font-size:12px">'+fecha(p.cerrado)+(p.asignado?' · '+esc(p.asignado):'')+' · '+(+p.horas)+' h'+(+p.coste_materiales?' · material '+eur(p.coste_materiales):'')+'</span></span></div>'}).join(''):'<p class="empty">Todavía no hay partes terminados este mes.</p>';
+  var mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),mios=fi.filter(function(p){return p.mio&&String(p.cerrado).slice(0,7)===mes}),h=mios.reduce(function(a,p){return a+(+p.horas||0)},0);
+  $('hTot').textContent=h.toLocaleString('es-ES')+' h';$('hEur').textContent=eur(h*D.tarifa)+' (a '+D.tarifa+' €/h)';
+  $('hDet').innerHTML=mios.length?mios.map(function(p){return'<div class="hr"><span>'+fecha(p.cerrado)+' · '+esc(p.apartamento)+'</span><span>'+(+p.horas)+' h</span></div>'}).join(''):'<p class="empty">Aquí verás tus trabajos terminados y sus horas.</p>';
+}
+function card(p){
+  var e=EST[p.estado]||[p.estado,'pen'];
+  var h='<div class="apt '+(p.urgente?'urg':e[1])+'"><div class="apt-h"><span class="apt-n">'+esc(p.apartamento)+'</span><span class="badge '+(p.urgente?'b-urg':'b-'+e[1])+'">'+(p.urgente?'🔴 Urgente':e[0])+'</span></div>';
+  h+='<div class="loc">📍 '+esc(p.edificio||'')+' · Planta '+esc(p.planta||'')+' · Puerta '+esc(p.puerta||'')+'</div>';
+  h+='<div class="desc">'+esc(p.descripcion)+'</div>';
+  h+='<div class="loc">Avisó: '+esc(p.reporta||'—')+' · '+fecha(p.creado)+(p.asignado?' · 👷 '+esc(p.asignado):' · sin asignar')+'</div>';
+  (p.notas||[]).forEach(function(n){h+='<div class="nt"><b>'+esc(n.por)+':</b> '+esc(n.texto)+'</div>'});
+  h+='<div class="tr">';
+  if(p.estado!=='en_curso')h+='<button class="btn bstart" data-act="coger" data-id="'+p.id+'">▶ Lo empiezo yo</button>';
+  else h+='<button class="btn bstart" data-act="fin" data-id="'+p.id+'">✅ Terminado</button>';
+  h+='<button class="btn bmsg" data-act="nota" data-id="'+p.id+'" style="flex:0 0 auto">📝 Nota</button></div></div>';
+  return h;
+}
+function modal(html){MOD=true;$('modal').hidden=false;$('modal').innerHTML='<div class="modal-bg"><div class="modal">'+html+'</div></div>'}
+function closeModal(){MOD=null;$('modal').hidden=true;$('modal').innerHTML=''}
+setInterval(function(){if(!MOD&&!BUSY&&document.visibilityState==='visible')load(true)},60000);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&!MOD)load(true)});
+document.addEventListener('click',async function(ev){
+  var t=ev.target.closest('[data-tab],[data-act],[data-fil]');if(!t)return;
+  if(t.dataset.fil){FIL=t.dataset.fil;render();return}
+  if(t.dataset.tab){['tPar','tFin','tHrs'].forEach(function(id){$(id).hidden=id!==t.dataset.tab});[].forEach.call(document.querySelectorAll('.nb'),function(b){b.classList.toggle('act',b===t)});window.scrollTo(0,0);return}
+  var a=t.dataset.act,id=t.dataset.id,p=id?parte(id):null;
+  if(a==='close')closeModal();
+  else if(a==='coger')act('parte_actualizar',{p_id:+id,p_estado:'en_curso',p_horas:null,p_materiales:null,p_coste_materiales:null,p_nota:null},'👷 Apuntado a tu nombre');
+  else if(a==='nota')modal('<h3>📝 Nota en '+esc(p.apartamento)+'</h3><textarea class="fi" id="mN" rows="3" placeholder="Qué has visto, qué falta, cuándo vuelves…"></textarea><button class="bsub" data-act="notaok" data-id="'+id+'">Guardar nota</button><button class="blink" data-act="close">Cancelar</button>');
+  else if(a==='notaok'){var n=$('mN').value.trim();if(!n){toast('Escribe la nota');return}closeModal();act('parte_actualizar',{p_id:+id,p_estado:null,p_horas:null,p_materiales:null,p_coste_materiales:null,p_nota:n},'📝 Nota guardada')}
+  else if(a==='fin')modal('<h3>✅ Terminar: '+esc(p.apartamento)+'</h3><label class="lb" for="mH">Horas trabajadas</label><input class="fi" id="mH" inputmode="decimal" placeholder="Ejemplo: 1,5"><label class="lb" for="mM">Materiales usados (si has comprado algo)</label><input class="fi" id="mM" placeholder="Ejemplo: grifo, silicona"><label class="lb" for="mC">Coste de los materiales en euros</label><input class="fi" id="mC" inputmode="decimal" placeholder="Ejemplo: 23,50"><label class="lb" for="mF">Qué has hecho</label><textarea class="fi" id="mF" rows="2" placeholder="Ejemplo: cambiado el grifo de la cocina"></textarea><p style="font-size:12px;color:var(--mt);margin-bottom:8px">Guarda el tique de la compra y mándalo por WhatsApp a Recepción.</p><button class="bsub" data-act="finok" data-id="'+id+'" style="background:var(--ok)">Guardar y terminar</button><button class="blink" data-act="close">Volver</button>');
+  else if(a==='finok'){var hh=num($('mH').value);if(!hh){toast('Pon las horas trabajadas');return}var mm=$('mM').value.trim(),cc=num($('mC').value),ff=$('mF').value.trim();closeModal();act('parte_actualizar',{p_id:+id,p_estado:'terminado',p_horas:hh,p_materiales:mm||null,p_coste_materiales:cc,p_nota:ff||null},'✅ Trabajo terminado. ¡Gracias!')}
+  else if(a==='nuevo'){var eds={};D.apartamentos.forEach(function(x){(eds[x.edificio]=eds[x.edificio]||[]).push(x.id)});modal('<h3>➕ Avería nueva</h3><label class="lb" for="mA">Apartamento</label><select class="fi" id="mA"><option value="">Elige el apartamento…</option>'+Object.keys(eds).map(function(e){return'<optgroup label="'+esc(e)+'">'+eds[e].map(function(x){return'<option>'+esc(x)+'</option>'}).join('')+'</optgroup>'}).join('')+'</select><label class="lb" for="mD">Qué pasa</label><textarea class="fi" id="mD" rows="3" placeholder="Qué está roto o falla"></textarea><select class="fi" id="mU"><option value="0">Puede esperar</option><option value="1">🔴 Urgente: hay que arreglarlo hoy</option></select><button class="bsub" data-act="nuevook">Avisar</button><button class="blink" data-act="close">Cancelar</button>')}
+  else if(a==='nuevook'){var ap=$('mA').value,de=$('mD').value.trim(),ur=$('mU').value==='1';if(!ap){toast('Elige el apartamento');return}if(!de){toast('Describe la avería');return}closeModal();act('incidencia',{p_apartamento:ap,p_descripcion:de,p_urgente:ur},ur?'🔴 Avería urgente apuntada':'🔧 Avería apuntada')}
+});
+load();
+</script>
+</body>
+</html>
