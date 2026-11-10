@@ -170,7 +170,8 @@ function card(t){
   if(ll.length)h+='<div class="llevar">⚠️ LLEVAR: '+esc(ll.map(function(x){return x.objeto}).join(', '))+'</div>';
   if(t.nota)h+='<div class="nota">📝 '+esc(t.nota)+'</div>';
   if(t.peticiones.length&&!t.solo_camas)h+='<div class="reqs"><b>🛏️ Peticiones del cliente</b>'+t.peticiones.map(function(r,i){return'<label><input type="checkbox" id="rq'+t.id+'_'+i+'" data-req="'+t.id+'" data-n="'+esc(r)+'" '+(t.peticiones_hechas.indexOf(r)>=0?'checked':'')+'> '+esc(r)+'</label>'}).join('')+'</div>';
-  h+='<div class="code">🔑 '+(t.cajetin?esc(t.cajetin)+' · ':'')+esc(t.codigo||'—')+'</div>';
+  h+='<div class="code">🔑 '+(t.cajetin?'Cajetín nº '+esc(t.cajetin)+' · Código ':'')+esc(t.codigo||'—')+'</div>';
+  if(t.acceso)h+='<div class="loc">🚪 '+esc(t.acceso)+'</div>';
   if(t.solo_camas)h+='<div class="tr">'+(t.camas_hechas?'<span class="tdisp">✅ Camas hechas</span>':'<button class="btn bstart" data-act="camas" data-id="'+t.id+'">🛏️ Camas hechas</button>')+'</div>';
   else if(done)h+='<div class="tr"><span class="tdisp">✅ '+fm(mins(t.inicio,t.fin))+'</span><button class="btn bgrey" data-act="reset" data-id="'+t.id+'" style="flex:0 0 auto">↩️ Reabrir</button></div>';
   else if(t.inicio)h+='<div class="tr"><span class="tdisp" data-tick="'+t.id+'">⏱ '+fm(mins(t.inicio))+'</span><button class="btn bstop" data-act="stop" data-id="'+t.id+'">Terminar</button></div>';

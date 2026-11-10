@@ -15,7 +15,9 @@ create table if not exists equipo (
 create table if not exists apartamentos (
   id text primary key,                       -- nombre: 'Cielo', 'Nieve'…
   edificio text, planta text, puerta text,
-  cajetin text, codigo text,                 -- 🔴 sensible: solo sale por la función mi_dia
+  cajetin text, codigo text,                 -- 🔴 sensible: solo sale por la función mi_dia. cajetin = nº de cajetín (Galatinos)
+  acceso text,                               -- código de portal u otra indicación de acceso
+  icnea int,                                 -- nº de alojamiento en ICNEA
   minutos int not null default 60,           -- tiempo previsto de limpieza
   propio boolean not null default true
 );

@@ -32,7 +32,7 @@ begin
         'solo_camas', yo.id = any(t.solo_camas), 'camas_hechas', t.camas_hechas,
         'inicio', t.inicio, 'fin', t.fin, 'nota', t.nota,
         'edificio', a.edificio, 'planta', a.planta, 'puerta', a.puerta,
-        'cajetin', a.cajetin, 'codigo', a.codigo, 'minutos', a.minutos,
+        'cajetin', a.cajetin, 'codigo', a.codigo, 'acceso', a.acceso, 'minutos', a.minutos,
         'con', (select coalesce(jsonb_agg(e.nombre order by e.nombre), '[]') from equipo e
                 where (e.id = any(t.personas) or e.id = any(t.solo_camas)) and e.id <> yo.id)
       ) order by t.hora_entrada nulls last, a.edificio, t.apartamento)
