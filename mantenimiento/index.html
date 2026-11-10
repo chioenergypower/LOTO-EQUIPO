@@ -198,7 +198,8 @@ function aptOf(id){return D.apartamentos.filter(function(a){return a.id===id})[0
 function hh(h){return String(h||'17:00').slice(0,5)}
 function estado(id,day){
   var b=(D.bloqueos||[]).filter(function(x){return x.apartamento===id&&x.desde<=day&&x.hasta>=day})[0];
-  if(b)return{s:'bloq',l:'CERRADO',t:'Cerrado',n:b.motivo||'Apartamento cerrado.'};
+  if(b&&/manten/i.test(b.motivo||''))return{s:'libre',l:'MANTENIMIENTO',t:'Cerrado para mantenimiento: se puede entrar',n:b.motivo};
+  if(b)return{s:'bloq',l:'CERRADO',t:'Cerrado · NO ENTRAR',n:(b.motivo||'Apartamento cerrado')+'. Solo se entra si el cierre es por mantenimiento.'};
   var st=(D.estancias||[]).filter(function(x){return x.apartamento===id});
   var den=st.filter(function(x){return x.llegada<day&&x.salida>day})[0];
   if(den)return{s:'ocupado',l:'OCUPADO',t:'Ocupado · NO ENTRAR',n:'Hay huéspedes hasta el '+lfecha(den.salida)+'.'};
@@ -231,7 +232,7 @@ function dayView(day,tit,ab){
   var m=porApt(ab),items=Object.keys(m).map(function(id){return{a:aptOf(id),ps:m[id],st:estado(id,day)}});
   var ok=items.filter(function(x){return x.st.s==='libre'||x.st.s==='ventana'}),no=items.filter(function(x){return x.st.s==='ocupado'||x.st.s==='bloq'});
   ok.sort(function(x,y){return (x.a.edificio||'').localeCompare(y.a.edificio||'')||RANK[x.st.s]-RANK[y.st.s]||x.a.id.localeCompare(y.a.id)});
-  var h='<h3 class="dh2">'+tit+': '+lfecha(day)+'</h3><div class="ley"><span class="badge sb s-libre">LIBRE · todo el día</span><span class="badge sb s-ventana">CON HORARIO</span><span class="badge sb s-ocupado">OCUPADO · no entrar</span></div>';
+  var h='<h3 class="dh2">'+tit+': '+lfecha(day)+'</h3><div class="ley"><span class="badge sb s-libre">LIBRE · todo el día</span><span class="badge sb s-ventana">CON HORARIO</span><span class="badge sb s-ocupado">OCUPADO · no entrar</span><span class="badge sb s-bloq">CERRADO · no entrar</span></div>';
   if(!ok.length)h+='<div class="empty">Ningún apartamento con arreglos está libre este día.</div>';
   var ed=null;
   ok.forEach(function(x){
@@ -239,7 +240,7 @@ function dayView(day,tit,ab){
     h+='<div class="apt s-'+x.st.s+'"><div class="apt-h"><span class="apt-n">'+esc(x.a.id)+etag(x.a)+'</span><span class="badge sb s-'+x.st.s+'">'+x.st.l+'</span></div><div class="loc">📍 Planta '+esc(x.a.planta||'')+' · Puerta '+esc(x.a.puerta||'')+'</div><div class="est s-'+x.st.s+'">'+esc(x.st.t)+'<small>'+esc(x.st.n)+'</small></div>'+acceso(x.a)+'<div class="sec" style="margin:4px 0">Arreglos ('+x.ps.length+')</div><ul class="ptl">'+x.ps.map(filaParte).join('')+'</ul></div>';
   });
   if(ed!==null)h+='</div>';
-  if(no.length)h+='<details class="ocu"><summary>Ocupados con arreglos pendientes ('+no.length+') · no entrar</summary><ul style="padding-left:18px;margin-top:6px">'+no.map(function(x){return'<li><b>'+esc(x.a.id)+'</b> ('+x.ps.length+'): '+esc(x.st.n)+'</li>'}).join('')+'</ul></details>';
+  if(no.length)h+='<details class="ocu"><summary>Ocupados o cerrados con arreglos pendientes ('+no.length+') · no entrar</summary><ul style="padding-left:18px;margin-top:6px">'+no.map(function(x){return'<li><b>'+esc(x.a.id)+'</b> ('+x.ps.length+'): '+esc(x.st.n)+'</li>'}).join('')+'</ul></details>';
   return h;
 }
 function weekView(ab){
