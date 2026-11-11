@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<!-- Esta página solo puede cargar su propio código y hablar con la base de datos de Loto. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://dotjulmjnnrcijmiauis.supabase.co; base-uri 'none'; form-action 'none'">
+<title>Loto Recepción</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap">
+<style>
+:root{--bg:#f0f2f5;--card:#fff;--fg:#1a1d23;--mt:#6b7280;--ac:#2563eb;--acl:#dbeafe;--acd:#1d4ed8;--ok:#059669;--okl:#d1fae5;--wn:#b45309;--wnl:#fef3c7;--dn:#dc2626;--dnl:#fee2e2;--info:#0369a1;--infol:#e0f2fe;--bd:#e5e7eb;--sh:0 1px 3px rgba(0,0,0,.08);--r:12px;--rs:8px;--fd:'Space Grotesk',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;--w:1180px}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#1a1d27;--fg:#e8eaed;--mt:#9ca3af;--ac:#60a5fa;--acl:#1e3a5f;--acd:#3b82f6;--ok:#34d399;--okl:#064e3b;--wn:#fbbf24;--wnl:#78350f;--dn:#f87171;--dnl:#7f1d1d;--info:#38bdf8;--infol:#0c4a6e;--bd:#2d3140;--sh:0 1px 3px rgba(0,0,0,.3);color-scheme:dark}}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--fb);font-size:14px;max-width:var(--w);margin:0 auto;padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--fd)}
+[hidden]{display:none!important}
+button{font-family:var(--fb);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.center{min-height:86vh;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;text-align:center}
+.login{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:22px;width:100%;max-width:380px;text-align:left}
+.login h1{font-size:22px;text-align:center;margin-bottom:4px}.login p{color:var(--mt);font-size:13px;line-height:1.5;margin-bottom:12px}
+.login .qr{display:block;margin:6px auto 10px;width:190px;height:190px;background:#fff;border-radius:var(--rs);padding:6px}
+.login .sec{font-family:var(--fd);font-size:12px;word-break:break-all;background:var(--bg);padding:6px 8px;border-radius:var(--rs);text-align:center;margin-bottom:10px}
+.err{color:var(--dn);font-size:13px;font-weight:600;min-height:18px;margin:4px 0}
+label.lb{display:block;font-size:12px;font-weight:600;color:var(--mt);margin:2px 0 4px}
+.fi{width:100%;padding:10px;border:1.5px solid var(--bd);border-radius:var(--rs);font-family:var(--fb);font-size:15px;background:var(--bg);color:var(--fg);margin-bottom:8px}
+.bsub{background:var(--ac);color:#fff;width:100%;border:none;border-radius:var(--rs);padding:11px;font-size:14px;font-weight:600}
+.bsub:disabled{opacity:.55}
+.blink{background:none;border:none;color:var(--mt);width:100%;padding:10px;font-size:13px}
+.bar{position:sticky;top:0;background:var(--ac);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;margin:0 -16px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:5}
+.bar h2{font-size:16px}.bar .dt{font-size:11px;opacity:.9}
+.bar .st{font-size:11px;background:rgba(255,255,255,.2);padding:4px 9px;border-radius:14px;white-space:nowrap}
+.bar button{background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:14px;padding:5px 11px;font-size:12px;font-weight:600}
+.demo{background:var(--wnl);color:var(--wn);font-weight:700;text-align:center;padding:6px;margin:8px 0 0;border-radius:var(--rs);font-size:12px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 0 4px;position:sticky;top:58px;background:var(--bg);z-index:4}
+.tabs button{flex:none;border:1.5px solid var(--bd);background:var(--card);color:var(--fg);border-radius:18px;padding:8px 14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.tabs button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.pill{background:var(--dn);color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;font-weight:800}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin:10px 0}
+.stt{background:var(--card);border-radius:var(--rs);padding:10px 6px;text-align:center;box-shadow:var(--sh)}
+.stt .n{font-family:var(--fd);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}.stt .l{font-size:10px;color:var(--mt);text-transform:uppercase;letter-spacing:.5px}
+.sec{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--mt);margin:16px 0 8px;font-weight:600}
+.fc{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--sh);margin:10px 0}.fc h3{font-size:15px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:10px;align-items:start}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:10px;align-items:start}
+.il{list-style:none;padding:0}.il li{padding:8px 2px;border-bottom:1px solid var(--bd);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}.il li:last-child{border:none}
+.il b{font-family:var(--fd);font-size:14px}.il small{color:var(--mt);display:block;font-size:12px}
+.tag{font-size:10px;background:var(--acl);color:var(--ac);padding:2px 7px;border-radius:8px;font-weight:700;white-space:nowrap}
+.empty{text-align:center;color:var(--mt);padding:18px 0;line-height:1.5}
+.aps{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px}
+.ap{border-radius:var(--rs);padding:8px 9px;background:var(--sb);color:var(--sc);font-weight:700;font-size:13px;line-height:1.25}.ap small{display:block;font-weight:500;font-size:11px;opacity:.9}
+.s-libre{--sc:var(--ok);--sb:var(--okl)}.s-ocupado{--sc:var(--info);--sb:var(--infol)}.s-entra{--sc:var(--acd);--sb:var(--acl)}.s-sale{--sc:var(--wn);--sb:var(--wnl)}.s-sale_entra{--sc:var(--dn);--sb:var(--dnl)}.s-cerrado{--sc:var(--mt);--sb:var(--bd)}
+.ley{display:flex;flex-wrap:wrap;gap:6px;font-size:11px;margin-bottom:8px}.ley span{padding:3px 8px;border-radius:12px;background:var(--sb);color:var(--sc);font-weight:700}
+.apt{background:var(--card);border-radius:var(--r);padding:12px;box-shadow:var(--sh);border-left:4px solid var(--bd)}
+.apt.urg{border-left-color:var(--dn)}.apt.ok{border-left-color:var(--ok)}.apt.cur{border-left-color:var(--ac)}.apt.pen{border-left-color:var(--wn)}
+.apt-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px}
+.apt-n{font-family:var(--fd);font-size:16px;font-weight:700}
+.badge{font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:14px;letter-spacing:.5px;white-space:nowrap;background:var(--bd);color:var(--fg)}
+.b-urg{background:var(--dn);color:#fff}.b-ok{background:var(--okl);color:var(--ok)}.b-cur{background:var(--acl);color:var(--ac)}.b-pen{background:var(--wnl);color:var(--wn)}
+.loc{font-size:12px;color:var(--mt);margin-bottom:5px}.desc{font-size:14px;line-height:1.45;margin:5px 0}
+.nt{font-size:12px;color:var(--mt);border-left:3px solid var(--bd);padding:2px 0 2px 8px;margin:4px 0}
+.msg{padding:9px 11px;margin-bottom:6px;border-radius:var(--rs);font-size:13px;line-height:1.4;max-width:88%}
+.msg.out{background:var(--okl);margin-left:auto}.msg.in{background:var(--acl)}.msg.new{outline:2px solid var(--ac)}
+.msg .h{font-size:11px;color:var(--mt);margin-bottom:2px;display:flex;justify-content:space-between;gap:10px}
+.mini{background:var(--ok);color:#fff;border:none;border-radius:12px;padding:5px 11px;font-size:12px;font-weight:600;white-space:nowrap}
+.mini.g{background:var(--bd);color:var(--fg)}.mini.a{background:var(--ac)}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.toast{position:fixed;top:calc(70px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:24px;font-size:13px;font-weight:600;z-index:40;opacity:0;transition:opacity .25s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}.toast.show{opacity:1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--card);border-radius:var(--r);padding:20px;max-width:440px;width:100%;max-height:88vh;overflow-y:auto}
+.modal h3{font-size:18px;margin-bottom:12px;text-align:center}
+.pie{padding:24px 0 40px;text-align:center;color:var(--mt);font-size:11px}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- Entrada: usuario y contraseña, y después el código del segundo paso -->
+<div id="gate" class="center">
+  <div class="login">
+    <h1>🛎️ Loto Recepción</h1>
+    <div id="pLogin">
+      <p>Entra con tu correo y tu contraseña. Después te pedirá el código de 6 cifras de tu móvil.</p>
+      <label class="lb" for="iMail">Correo</label><input class="fi" id="iMail" type="email" autocomplete="username" inputmode="email">
+      <label class="lb" for="iPass">Contraseña</label><input class="fi" id="iPass" type="password" autocomplete="current-password">
+      <div class="err" id="eLogin" role="alert"></div>
+      <button class="bsub" id="bLogin">Entrar</button>
+    </div>
+    <div id="pAlta" hidden>
+      <p><b>Primer acceso: activa el segundo paso.</b> Abre en tu móvil una aplicación de códigos (Google Authenticator, Microsoft Authenticator…), escanea este cuadro y escribe el código de 6 cifras que te dé.</p>
+      <img class="qr" id="qr" alt="Código QR para la aplicación de códigos">
+      <p style="margin-bottom:4px">Si no puedes escanearlo, escribe esta clave en la aplicación:</p>
+      <div class="sec" id="qrSec"></div>
+      <label class="lb" for="iAlta">Código de 6 cifras</label><input class="fi" id="iAlta" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+      <div class="err" id="eAlta" role="alert"></div>
+      <button class="bsub" id="bAlta">Activar y entrar</button>
+      <button class="blink" data-act="salir">Cancelar</button>
+    </div>
+    <div id="pCod" hidden>
+      <p>Escribe el código de 6 cifras que sale ahora en la aplicación de códigos de tu móvil.</p>
+      <label class="lb" for="iCod">Código de 6 cifras</label><input class="fi" id="iCod" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+      <div class="err" id="eCod" role="alert"></div>
+      <button class="bsub" id="bCod">Entrar</button>
+      <button class="blink" data-act="salir">Entrar con otra cuenta</button>
+    </div>
+    <div id="pEspera" hidden><p style="text-align:center;margin:10px 0">Cargando…</p></div>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <div class="bar"><div><h2 id="uName"></h2><div class="dt" id="uDate"></div></div><div style="display:flex;gap:6px;align-items:center"><span class="st" id="sync">Al día</span><button data-act="salir">Salir</button></div></div>
+  <div class="demo" id="demo" hidden>DEMOSTRACIÓN — datos de ejemplo, no son reales</div>
+  <div class="tabs" id="tabs"></div>
+  <div id="vista"></div>
+  <div class="pie">Loto Recepción · los datos de clientes solo se ven aquí, con sesión y segundo paso</div>
+</div>
+<div id="modal" hidden></div>
+
+<script src="../config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
