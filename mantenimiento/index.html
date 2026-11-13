@@ -129,6 +129,7 @@ label.lb{display:block;font-size:12px;font-weight:600;color:var(--mt);margin:2px
     <button class="nb" data-tab="tHrs"><span class="ni">⏱️</span>Mis horas</button>
   </nav>
 </div>
+<input type="file" id="fotoIn" accept="image/*" hidden>
 <div id="modal" hidden></div>
 <script src="../config.js"></script>
 <script src="../api.js"></script>
@@ -187,10 +188,24 @@ function card(p){
   h+='<div class="tr">';
   if(p.estado!=='en_curso')h+='<button class="btn bstart" data-act="coger" data-id="'+p.id+'">▶ Lo empiezo yo</button>';
   else h+='<button class="btn bstart" data-act="fin" data-id="'+p.id+'">✅ Terminado</button>';
-  h+='<button class="btn bmsg" data-act="nota" data-id="'+p.id+'" style="flex:0 0 auto">📝 Nota</button></div></div>';
+  h+='<button class="btn bmsg" data-act="nota" data-id="'+p.id+'" style="flex:0 0 auto">📝 Nota</button></div>'+fotosBar(p)+'</div>';
   return h;
 }
 
+function fotosBar(p){
+  var n=+p.nfotos||0;
+  return '<div class="tr" style="margin-top:6px">'+(n?'<button class="btn bmsg" data-act="verfotos" data-id="'+p.id+'">🖼️ Ver fotos ('+n+')</button>':'')+'<button class="btn bmsg" data-act="foto" data-id="'+p.id+'">📷 Añadir foto</button></div>';
+}
+// Reduce la foto en el móvil (máx. 1280 px, JPEG) antes de subirla: ocupa poco y sube rápido con mala cobertura.
+function reducir(file){return new Promise(function(ok,ko){
+  var fr=new FileReader();fr.onerror=function(){ko(new Error('no_se_pudo_leer'))};
+  fr.onload=function(){var im=new Image();im.onerror=function(){ko(new Error('foto_no_valida'))};
+    im.onload=function(){var m=1280,w=im.naturalWidth,h=im.naturalHeight,k=Math.min(1,m/Math.max(w,h));
+      var c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',0.72))};
+    im.src=fr.result};
+  fr.readAsDataURL(file)})}
+var FOTO_ID=null;
 function addDays(iso,n){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function lfecha(iso){var d=new Date(iso+'T12:00:00');return DAY[d.getDay()]+' '+d.getDate()+' de '+MON[d.getMonth()]}
 function corto(iso){var d=new Date(iso+'T12:00:00');return DAY[d.getDay()].slice(0,3)+' '+d.getDate()}
@@ -224,7 +239,7 @@ function filaParte(p){
   var e=EST[p.estado]||[p.estado,'pen'];
   var h='<li><div class="desc">'+(p.urgente?'🔴 ':'')+esc(p.descripcion)+'</div><div class="loc">'+esc(e[0])+' · avisó '+esc(p.reporta||'—')+' · '+fecha(p.creado)+'</div>';
   (p.notas||[]).forEach(function(n){h+='<div class="nt"><b>'+esc(n.por)+':</b> '+esc(n.texto)+'</div>'});
-  h+='<div class="tr">'+(p.estado!=='en_curso'?'<button class="btn bstart" data-act="coger" data-id="'+p.id+'">▶ Lo empiezo yo</button>':'<button class="btn bstart" data-act="fin" data-id="'+p.id+'">✅ Terminado</button>')+'<button class="btn bmsg" data-act="nota" data-id="'+p.id+'" style="flex:0 0 auto">📝 Nota</button></div></li>';
+  h+='<div class="tr">'+(p.estado!=='en_curso'?'<button class="btn bstart" data-act="coger" data-id="'+p.id+'">▶ Lo empiezo yo</button>':'<button class="btn bstart" data-act="fin" data-id="'+p.id+'">✅ Terminado</button>')+'<button class="btn bmsg" data-act="nota" data-id="'+p.id+'" style="flex:0 0 auto">📝 Nota</button></div>'+fotosBar(p)+'</li>';
   return h;
 }
 function porApt(ab){var m={};ab.forEach(function(p){(m[p.apartamento]=m[p.apartamento]||[]).push(p)});return m}
@@ -267,9 +282,19 @@ document.addEventListener('click',async function(ev){
   else if(a==='notaok'){var n=$('mN').value.trim();if(!n){toast('Escribe la nota');return}closeModal();act('parte_actualizar',{p_id:+id,p_estado:null,p_horas:null,p_materiales:null,p_coste_materiales:null,p_nota:n},'📝 Nota guardada')}
   else if(a==='fin')modal('<h3>✅ Terminar: '+esc(p.apartamento)+'</h3><label class="lb" for="mH">Horas trabajadas</label><input class="fi" id="mH" inputmode="decimal" placeholder="Ejemplo: 1,5"><label class="lb" for="mM">Materiales usados (si has comprado algo)</label><input class="fi" id="mM" placeholder="Ejemplo: grifo, silicona"><label class="lb" for="mC">Coste de los materiales en euros</label><input class="fi" id="mC" inputmode="decimal" placeholder="Ejemplo: 23,50"><label class="lb" for="mF">Qué has hecho</label><textarea class="fi" id="mF" rows="2" placeholder="Ejemplo: cambiado el grifo de la cocina"></textarea><p style="font-size:12px;color:var(--mt);margin-bottom:8px">Guarda el tique de la compra y mándalo por WhatsApp a Recepción.</p><button class="bsub" data-act="finok" data-id="'+id+'" style="background:var(--ok)">Guardar y terminar</button><button class="blink" data-act="close">Volver</button>');
   else if(a==='finok'){var hh=num($('mH').value);if(!hh){toast('Pon las horas trabajadas');return}var mm=$('mM').value.trim(),cc=num($('mC').value),ff=$('mF').value.trim();closeModal();act('parte_actualizar',{p_id:+id,p_estado:'terminado',p_horas:hh,p_materiales:mm||null,p_coste_materiales:cc,p_nota:ff||null},'✅ Trabajo terminado. ¡Gracias!')}
+  else if(a==='foto'){FOTO_ID=+id;$('fotoIn').value='';$('fotoIn').click()}
+  else if(a==='verfotos'){modal('<h3>🖼️ Fotos · '+esc(p.apartamento)+'</h3><p class="loc">Cargando…</p><button class="blink" data-act="close">Cerrar</button>');
+    try{var fs=await rpc('parte_fotos',{p_id:+id});if(!MOD)return;modal('<h3>🖼️ Fotos · '+esc(p.apartamento)+'</h3>'+(fs.length?fs.map(function(f){return'<figure style="margin:0 0 12px"><img src="'+esc(f.datos)+'" alt="Foto del arreglo" style="width:100%;border-radius:10px;display:block"><figcaption class="loc">'+esc(f.por||'')+' · '+fecha(f.creado)+'</figcaption></figure>'}).join(''):'<p class="empty">Sin fotos.</p>')+'<button class="blink" data-act="close">Cerrar</button>')}
+    catch(e){closeModal();toast('No se han podido cargar las fotos')}}
   else if(a==='nuevo'){var eds={};D.apartamentos.forEach(function(x){(eds[x.edificio]=eds[x.edificio]||[]).push(x.id)});modal('<h3>➕ Avería nueva</h3><label class="lb" for="mA">Apartamento</label><select class="fi" id="mA"><option value="">Elige el apartamento…</option>'+Object.keys(eds).map(function(e){return'<optgroup label="'+esc(e)+'">'+eds[e].map(function(x){return'<option>'+esc(x)+'</option>'}).join('')+'</optgroup>'}).join('')+'</select><label class="lb" for="mD">Qué pasa</label><textarea class="fi" id="mD" rows="3" placeholder="Qué está roto o falla"></textarea><select class="fi" id="mU"><option value="0">Puede esperar</option><option value="1">🔴 Urgente: hay que arreglarlo hoy</option></select><button class="bsub" data-act="nuevook">Avisar</button><button class="blink" data-act="close">Cancelar</button>')}
   else if(a==='nuevook'){var ap=$('mA').value,de=$('mD').value.trim(),ur=$('mU').value==='1';if(!ap){toast('Elige el apartamento');return}if(!de){toast('Describe la avería');return}closeModal();act('incidencia',{p_apartamento:ap,p_descripcion:de,p_urgente:ur},ur?'🔴 Avería urgente apuntada':'🔧 Avería apuntada')}
 });
+document.addEventListener('change',async function(ev){
+  if(ev.target.id!=='fotoIn'||!FOTO_ID)return;var f=ev.target.files&&ev.target.files[0];if(!f)return;
+  toast('📷 Subiendo foto…');
+  try{var d=await reducir(f);await rpc('parte_foto',{p_id:FOTO_ID,p_datos:d});toast('📷 Foto guardada');await load(true)}
+  catch(e){toast(e.codigo==='maximo_10_fotos'?'Máximo 10 fotos por parte':e.codigo==='sin_conexion'?'Sin conexión: inténtalo otra vez':'No se ha podido subir la foto')}
+  FOTO_ID=null});
 load();
 </script>
 </body>
