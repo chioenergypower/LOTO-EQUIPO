@@ -105,6 +105,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 details.ocu{background:var(--card);border-radius:var(--r);padding:12px;box-shadow:var(--sh);margin-top:10px}details.ocu summary{font-weight:700;cursor:pointer}details.ocu li{font-size:13px;padding:3px 0}
 .wk{overflow-x:auto;background:var(--card);border-radius:var(--r);box-shadow:var(--sh)}.wk table{border-collapse:collapse;width:100%;font-size:12px}.wk th,.wk td{padding:6px 5px;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}.wk th:first-child,.wk td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}.wk th{font-size:10px;text-transform:uppercase;color:var(--mt)}.wk .wb td{background:var(--bg);font-weight:700}
 .cl{display:inline-block;min-width:50px;border-radius:6px;padding:3px 4px;font-weight:700;font-size:11px;background:var(--sb);color:var(--sc)}
+.urgbox{background:var(--dnl);border:2px solid var(--dn);border-radius:var(--r);padding:12px;margin:10px 0 14px}.urgbox h3{color:var(--dn);font-size:16px;margin-bottom:4px}.urgsub{font-size:12px;color:var(--fg);margin-bottom:8px}.apt.urgcard{border-left-color:var(--dn)}.urgline{background:var(--dn);color:#fff;font-weight:700;font-size:13px;border-radius:var(--rs);padding:7px 10px;margin:4px 0 6px}
 label.lb{display:block;font-size:12px;font-weight:600;color:var(--mt);margin:2px 0 4px}
 </style>
 </head>
@@ -243,16 +244,36 @@ function filaParte(p){
   return h;
 }
 function porApt(ab){var m={};ab.forEach(function(p){(m[p.apartamento]=m[p.apartamento]||[]).push(p)});return m}
+function entraEse(id,day){return (D.estancias||[]).filter(function(x){return x.apartamento===id&&x.llegada===day})[0]}
+function aptBox(x,day,urg){
+  var en=entraEse(x.a.id,day);
+  var h='<div class="apt s-'+x.st.s+(urg?' urgcard':'')+'"><div class="apt-h"><span class="apt-n">'+esc(x.a.id)+etag(x.a)+'</span><span class="badge sb s-'+x.st.s+'">'+x.st.l+'</span></div>';
+  if(urg&&en)h+='<div class="urgline">🧳 Entra cliente a las '+hh(en.hora_entrada)+': tiene que quedar arreglado ANTES</div>';
+  else if(urg)h+='<div class="urgline">🔴 Avería marcada como urgente</div>';
+  h+='<div class="loc">📍 Planta '+esc(x.a.planta||'')+' · Puerta '+esc(x.a.puerta||'')+'</div><div class="est s-'+x.st.s+'">'+esc(x.st.t)+'<small>'+esc(x.st.n)+'</small></div>'+acceso(x.a)+'<div class="sec" style="margin:4px 0">Arreglos ('+x.ps.length+')</div><ul class="ptl">'+x.ps.map(filaParte).join('')+'</ul></div>';
+  return h;
+}
 function dayView(day,tit,ab){
   var m=porApt(ab),items=Object.keys(m).map(function(id){return{a:aptOf(id),ps:m[id],st:estado(id,day)}});
   var ok=items.filter(function(x){return x.st.s==='libre'||x.st.s==='ventana'}),no=items.filter(function(x){return x.st.s==='ocupado'||x.st.s==='bloq'});
-  ok.sort(function(x,y){return (x.a.edificio||'').localeCompare(y.a.edificio||'')||RANK[x.st.s]-RANK[y.st.s]||x.a.id.localeCompare(y.a.id)});
-  var h='<h3 class="dh2">'+tit+': '+lfecha(day)+'</h3><div class="ley"><span class="badge sb s-libre">LIBRE · todo el día</span><span class="badge sb s-ventana">CON HORARIO</span><span class="badge sb s-ocupado">OCUPADO · no entrar</span><span class="badge sb s-bloq">CERRADO · no entrar</span></div>';
-  if(!ok.length)h+='<div class="empty">Ningún apartamento con arreglos está libre este día.</div>';
+  // URGENTE: primero los pisos donde ENTRA un cliente ese día (por hora de entrada), después las averías marcadas urgentes.
+  var urg=ok.filter(function(x){return entraEse(x.a.id,day)||x.ps.some(function(p){return p.urgente})});
+  urg.sort(function(x,y){var ex=entraEse(x.a.id,day),ey=entraEse(y.a.id,day);if(!!ex!==!!ey)return ex?-1:1;if(ex&&ey)return hh(ex.hora_entrada).localeCompare(hh(ey.hora_entrada));return (x.a.edificio||'').localeCompare(y.a.edificio||'')});
+  var rest=ok.filter(function(x){return urg.indexOf(x)<0});
+  rest.sort(function(x,y){return (x.a.edificio||'').localeCompare(y.a.edificio||'')||RANK[x.st.s]-RANK[y.st.s]||x.a.id.localeCompare(y.a.id)});
+  var h='<h3 class="dh2">'+tit+': '+lfecha(day)+'</h3>';
+  h+='<div class="urgbox"><h3>🚨 URGENTE PARA '+(tit==='Hoy'?'HOY':'MAÑANA')+' · arreglar primero</h3>';
+  h+=urg.length?'<p class="urgsub">Primero los apartamentos donde entra un cliente ese día (por hora de entrada) y después las averías urgentes.</p><div class="grid">'+urg.map(function(x){return aptBox(x,day,true)}).join('')+'</div>':'<p class="urgsub">✅ Nada urgente este día.</p>';
+  h+='</div>';
+  if(tit==='Hoy'){var man=addDays(day,1),pm=items.filter(function(x){var s=estado(x.a.id,man);return entraEse(x.a.id,man)&&(s.s==='libre'||s.s==='ventana')});
+    if(pm.length)h+='<div class="aviso">⏭️ <b>Mañana entran clientes</b> en '+pm.map(function(x){return'<b>'+esc(x.a.id)+'</b> ('+x.ps.length+' arreglo'+(x.ps.length>1?'s':'')+')'}).join(', ')+'. Si se puede, arréglalo hoy; si no, mañana a primera hora (pestaña «Mañana»).</div>';}
+  h+='<div class="ley"><span class="badge sb s-libre">LIBRE · todo el día</span><span class="badge sb s-ventana">CON HORARIO</span><span class="badge sb s-ocupado">OCUPADO · no entrar</span><span class="badge sb s-bloq">CERRADO · no entrar</span></div>';
+  if(!rest.length&&!urg.length)h+='<div class="empty">Ningún apartamento con arreglos está libre este día.</div>';
+  else if(rest.length)h+='<div class="sec" style="font-size:13px;color:var(--fg)">🔧 El resto de arreglos</div>';
   var ed=null;
-  ok.forEach(function(x){
-    if(x.a.edificio!==ed){if(ed!==null)h+='</div>';ed=x.a.edificio;h+='<div class="sec">'+esc(ed)+' · '+ok.filter(function(y){return y.a.edificio===ed}).length+' con trabajo</div><div class="grid">'}
-    h+='<div class="apt s-'+x.st.s+'"><div class="apt-h"><span class="apt-n">'+esc(x.a.id)+etag(x.a)+'</span><span class="badge sb s-'+x.st.s+'">'+x.st.l+'</span></div><div class="loc">📍 Planta '+esc(x.a.planta||'')+' · Puerta '+esc(x.a.puerta||'')+'</div><div class="est s-'+x.st.s+'">'+esc(x.st.t)+'<small>'+esc(x.st.n)+'</small></div>'+acceso(x.a)+'<div class="sec" style="margin:4px 0">Arreglos ('+x.ps.length+')</div><ul class="ptl">'+x.ps.map(filaParte).join('')+'</ul></div>';
+  rest.forEach(function(x){
+    if(x.a.edificio!==ed){if(ed!==null)h+='</div>';ed=x.a.edificio;h+='<div class="sec">'+esc(ed)+' · '+rest.filter(function(y){return y.a.edificio===ed}).length+' con trabajo</div><div class="grid">'}
+    h+=aptBox(x,day,false);
   });
   if(ed!==null)h+='</div>';
   if(no.length)h+='<details class="ocu"><summary>Ocupados o cerrados con arreglos pendientes ('+no.length+') · no entrar</summary><ul style="padding-left:18px;margin-top:6px">'+no.map(function(x){return'<li><b>'+esc(x.a.id)+'</b> ('+x.ps.length+'): '+esc(x.st.n)+'</li>'}).join('')+'</ul></details>';
