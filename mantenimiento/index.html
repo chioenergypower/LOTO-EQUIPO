@@ -106,7 +106,22 @@ details.ocu{background:var(--card);border-radius:var(--r);padding:12px;box-shado
 .wk{overflow-x:auto;background:var(--card);border-radius:var(--r);box-shadow:var(--sh)}.wk table{border-collapse:collapse;width:100%;font-size:12px}.wk th,.wk td{padding:6px 5px;border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}.wk th:first-child,.wk td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}.wk th{font-size:10px;text-transform:uppercase;color:var(--mt)}.wk .wb td{background:var(--bg);font-weight:700}
 .cl{display:inline-block;min-width:50px;border-radius:6px;padding:3px 4px;font-weight:700;font-size:11px;background:var(--sb);color:var(--sc)}
 .urgbox{background:var(--dnl);border:2px solid var(--dn);border-radius:var(--r);padding:12px;margin:10px 0 14px}.urgbox h3{color:var(--dn);font-size:16px;margin-bottom:4px}.urgsub{font-size:12px;color:var(--fg);margin-bottom:8px}.apt.urgcard{border-left-color:var(--dn)}.urgline{background:var(--dn);color:#fff;font-weight:700;font-size:13px;border-radius:var(--rs);padding:7px 10px;margin:4px 0 6px}
-label.lb{display:block;font-size:12px;font-weight:600;color:var(--mt);margin:2px 0 4px}
+label.lb{display:block;font-size:13px;font-weight:700;color:var(--fg);margin:4px 0 4px}
+.big{display:block;width:100%;border:none;border-radius:14px;padding:16px 12px;font-size:19px;font-weight:800;color:#fff;font-family:var(--fd);letter-spacing:.5px}
+.big.go{background:#047857}.big.stop{background:#b91c1c}.big.small{font-size:15px;padding:11px;font-weight:700;background:var(--bd);color:var(--fg)}
+.run{background:#1d4ed8;color:#fff;border-radius:var(--r);padding:16px;margin:12px auto;max-width:640px;text-align:center;box-shadow:var(--sh)}
+.run h3{font-size:15px;opacity:.95;margin-bottom:4px}.run .tm{font-family:var(--fd);font-size:40px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.run .eu{font-size:16px;font-weight:700;margin:2px 0 12px;opacity:.95}.run .big.stop{background:#fff;color:#b91c1c}
+.clock{background:var(--acl);color:var(--acd);border-radius:var(--rs);padding:10px;text-align:center;font-weight:700;font-size:15px;margin:6px 0}
+.clock .tm{font-family:var(--fd);font-size:24px;font-variant-numeric:tabular-nums}
+.guia{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:12px 14px;margin:12px auto;max-width:640px;font-size:15px;line-height:1.5}
+.guia summary{font-weight:800;font-family:var(--fd);font-size:16px;cursor:pointer}.guia ol{padding-left:22px;margin-top:6px}.guia li{margin:4px 0}
+.sm{display:flex;gap:6px;margin-top:8px}.sm button{flex:1;border:1.5px solid var(--bd);background:var(--card);color:var(--fg);border-radius:var(--rs);padding:9px 4px;font-size:13px;font-weight:600}
+.matl{list-style:none;padding:0;margin:4px 0 10px}.matl li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:15px}
+.matl button{border:none;background:var(--dnl);color:var(--dn);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700}
+.mrow{display:grid;grid-template-columns:1fr 100px;gap:6px}.mrow .fi{margin-bottom:6px;font-size:16px}
+.sum{background:var(--bg);border-radius:var(--rs);padding:10px 12px;margin:8px 0 12px;font-size:15px}.sum .hr{font-size:15px}.sum .tt{font-family:var(--fd);font-weight:800;font-size:20px;color:var(--ok)}
+.modal .fi{font-size:16px}
 </style>
 </head>
 <body>
@@ -115,6 +130,14 @@ label.lb{display:block;font-size:12px;font-weight:600;color:var(--mt);margin:2px
 <div id="app" hidden>
   <div class="bar"><div><h2 id="uName"></h2><div class="dt" id="uDate"></div></div><span class="st" id="sync">Al día</span></div>
   <div class="tab" id="tPar">
+    <div id="runEl"></div>
+    <details class="guia" id="guiaEl"><summary>📖 Cómo se usa (pulsa aquí)</summary><ol>
+      <li><b>Al llegar al apartamento</b>, busca su arreglo y pulsa <b>▶ EMPEZAR</b>. El reloj empieza a contar solo.</li>
+      <li>Haz el trabajo tranquilo. Arriba verás el tiempo que llevas.</li>
+      <li><b>Al acabar</b>, pulsa <b>⏹ TERMINAR</b>.</li>
+      <li>Si has puesto alguna pieza (un enchufe, un grifo…), escribe <b>qué es</b> y <b>cuánto ha costado</b> y pulsa <b>➕ Añadir</b>.</li>
+      <li>Pulsa <b>✅ GUARDAR</b>. Ya está: las horas (a 30 € la hora) y las piezas se apuntan solas.</li>
+    </ol><p class="loc" style="margin-top:6px">Si tienes que irte y volver otro día, pulsa <b>⏸ Me voy, vuelvo otro día</b>: el reloj se para y al volver pulsas <b>▶ SEGUIR</b>.</p></details>
     <div class="aviso">🔑 El día de salida de un cliente solo se puede entrar de <b>11:00 a 17:00</b>. La puerta la abre el equipo de limpieza.</div>
     <div class="stats" id="statsEl"></div>
     <button class="bsub" data-act="nuevo" style="max-width:640px;display:block;margin:0 auto 4px">➕ Avisar de una avería nueva</button>
@@ -148,7 +171,7 @@ function num(v){return parseFloat(String(v||'0').replace(',','.'))||0}
 function gate(txt){$('app').hidden=true;$('gate').hidden=false;$('gateTxt').textContent=txt}
 async function load(silent){
   if(!lotoClave()){gate('Abre esta página con tu enlace personal. Si no lo tienes, pídeselo a Recepción.');return}
-  try{D=await rpc('mis_partes');$('gate').hidden=true;$('app').hidden=false;$('sync').textContent='Al día';render()}
+  try{D=await rpc('mis_partes');if(D.ahora)OFF=new Date(D.ahora).getTime()-Date.now();$('gate').hidden=true;$('app').hidden=false;$('sync').textContent='Al día';render()}
   catch(e){
     if(e.codigo==='enlace_no_valido'){lotoOlvidar();gate('Este enlace ya no es válido. Pide uno nuevo a Recepción.')}
     else if(!D)gate('No hay conexión. Comprueba la cobertura; la página volverá a intentarlo sola.');
@@ -162,6 +185,8 @@ async function act(fn,args,okMsg){
 }
 function parte(id){return D.partes.filter(function(p){return p.id===+id})[0]}
 function render(){
+  runBanner();try{if(!localStorage.getItem('mant-guia')){$('guiaEl').open=true;localStorage.setItem('mant-guia','1')}}catch(e){}
+  if(MOD&&MOD.id&&$('fMat'))pintaMats(parte(MOD.id));
   var d=new Date();$('uName').textContent='¡Hola, '+D.yo.nombre+'!';$('uDate').textContent=DAY[d.getDay()]+' '+d.getDate()+' de '+MON[d.getMonth()];
   var ab=D.partes.filter(function(p){return p.estado!=='terminado'}),fi=D.partes.filter(function(p){return p.estado==='terminado'});
   $('statsEl').innerHTML='<div class="stt"><div class="n">'+ab.length+'</div><div class="l">Abiertos</div></div><div class="stt"><div class="n" style="color:var(--dn)">'+ab.filter(function(p){return p.urgente}).length+'</div><div class="l">Urgentes</div></div><div class="stt"><div class="n" style="color:var(--ac)">'+ab.filter(function(p){return p.mio}).length+'</div><div class="l">Míos</div></div>';
@@ -174,29 +199,48 @@ function render(){
   else if(VIS==='sem')$('parEl').innerHTML=weekView(ab);
   else{var vis=ab.filter(function(p){return FIL==='Todos'||(FIL==='Míos'?p.mio:p.edificio===FIL)});
   $('parEl').innerHTML=vis.length?'<div class="grid">'+vis.map(card).join('')+'</div>':'<div class="empty">'+(ab.length?'No hay partes en este filtro.':'🎉 No hay averías pendientes.')+'</div>';}
-  $('finEl').innerHTML=fi.length?fi.map(function(p){return'<div class="hr"><span><b>'+esc(p.apartamento)+'</b> · '+esc(p.descripcion)+'<br><span style="color:var(--mt);font-size:12px">'+fecha(p.cerrado)+(p.asignado?' · '+esc(p.asignado):'')+' · '+(+p.horas)+' h'+(+p.coste_materiales?' · material '+eur(p.coste_materiales):'')+'</span></span></div>'}).join(''):'<p class="empty">Todavía no hay partes terminados este mes.</p>';
-  var mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),mios=fi.filter(function(p){return p.mio&&String(p.cerrado).slice(0,7)===mes}),h=mios.reduce(function(a,p){return a+(+p.horas||0)},0);
-  $('hTot').textContent=h.toLocaleString('es-ES')+' h';$('hEur').textContent=eur(h*D.tarifa)+' (a '+D.tarifa+' €/h)';
-  $('hDet').innerHTML=mios.length?mios.map(function(p){return'<div class="hr"><span>'+fecha(p.cerrado)+' · '+esc(p.apartamento)+'</span><span>'+(+p.horas)+' h</span></div>'}).join(''):'<p class="empty">Aquí verás tus trabajos terminados y sus horas.</p>';
+  $('finEl').innerHTML=fi.length?fi.map(function(p){return'<div class="hr"><span><b>'+esc(p.apartamento)+'</b> · '+esc(p.descripcion)+'<br><span style="color:var(--mt);font-size:12px">'+fecha(p.cerrado)+' · '+dur(+p.minutos||(+p.horas*60))+' → '+eur(p.mano_obra)+(+p.coste_materiales?' · piezas '+eur(p.coste_materiales):'')+'</span></span><b>'+eur(p.total)+'</b></div>'}).join(''):'<p class="empty">Todavía no hay partes terminados este mes.</p>';
+  var mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),mios=fi.filter(function(p){return String(p.cerrado).slice(0,7)===mes}),mn=mios.reduce(function(a,p){return a+(+p.minutos||(+p.horas*60)||0)},0),eu=mios.reduce(function(a,p){return a+(+p.mano_obra||0)},0);
+  $('hTot').textContent=dur(mn);$('hEur').textContent=eur(eu)+' (a '+D.tarifa+' € la hora)';
+  $('hDet').innerHTML=mios.length?mios.map(function(p){return'<div class="hr"><span>'+fecha(p.cerrado)+' · '+esc(p.apartamento)+'</span><span>'+dur(+p.minutos||(+p.horas*60))+'</span></div>'}).join(''):'<p class="empty">Aquí verás tus trabajos terminados y sus horas.</p>';
 }
 function card(p){
   var e=EST[p.estado]||[p.estado,'pen'];
   var h='<div class="apt '+(p.urgente?'urg':e[1])+'"><div class="apt-h"><span class="apt-n">'+esc(p.apartamento)+'</span><span class="badge '+(p.urgente?'b-urg':'b-'+e[1])+'">'+(p.urgente?'🔴 Urgente':e[0])+'</span></div>';
   h+='<div class="loc">📍 '+esc(p.edificio||'')+' · Planta '+esc(p.planta||'')+' · Puerta '+esc(p.puerta||'')+'</div>';
   h+='<div class="desc">'+esc(p.descripcion)+'</div>'+acceso(aptOf(p.apartamento));
-  h+='<div class="loc">Avisó: '+esc(p.reporta||'—')+' · '+fecha(p.creado)+(p.asignado?' · 👷 '+esc(p.asignado):' · sin asignar')+'</div>';
+  h+='<div class="loc">Avisó: '+esc(p.reporta||'—')+' · '+fecha(p.creado)+'</div>';
   (p.notas||[]).forEach(function(n){h+='<div class="nt"><b>'+esc(n.por)+':</b> '+esc(n.texto)+'</div>'});
-  h+='<div class="tr">';
-  if(p.estado!=='en_curso')h+='<button class="btn bstart" data-act="coger" data-id="'+p.id+'">▶ Lo empiezo yo</button>';
-  else h+='<button class="btn bstart" data-act="fin" data-id="'+p.id+'">✅ Terminado</button>';
-  h+='<button class="btn bmsg" data-act="nota" data-id="'+p.id+'" style="flex:0 0 auto">📝 Nota</button></div>'+fotosBar(p)+'</div>';
+  h+=botones(p)+'</div>';
   return h;
 }
 
-function fotosBar(p){
+// Reloj: minutos trabajados ahora mismo (acumulados + los del reloj en marcha).
+var OFF=0;
+function minAhora(p){var m=+p.minutos||0;if(p.inicio)m+=Math.max(0,(Date.now()+OFF-new Date(p.inicio).getTime())/60000);return m}
+function tarifa(p){return +(p&&p.tarifa)||+D.tarifa||30}
+function dur(m){m=Math.floor(m);var h=Math.floor(m/60),mm=m%60;return h?h+' h '+mm+' min':mm+' min'}
+function reloj(m){var s=Math.floor(m*60),h=Math.floor(s/3600),mi=Math.floor(s%3600/60),se=s%60;return h+':'+String(mi).padStart(2,'0')+':'+String(se).padStart(2,'0')}
+function cuesta(p,m){return Math.round(m/60*tarifa(p)*100)/100}
+// Botones de cada arreglo: uno grande según el momento + fila pequeña (foto y nota).
+function botones(p){
+  var h='',m=minAhora(p);
+  if(p.inicio){h+='<div class="clock">⏱️ Trabajando: <span class="tm" data-clock="'+p.id+'">'+reloj(m)+'</span></div><button class="big stop" data-act="fin" data-id="'+p.id+'">⏹ TERMINAR</button><button class="big small" style="margin-top:6px" data-act="pausa" data-id="'+p.id+'">⏸ Me voy, vuelvo otro día</button>'}
+  else if(m>0){h+='<div class="clock">A medias: llevas <b>'+dur(m)+'</b></div><button class="big go" data-act="empezar" data-id="'+p.id+'">▶ SEGUIR</button><button class="big stop" style="margin-top:6px" data-act="fin" data-id="'+p.id+'">⏹ TERMINAR</button>'}
+  else h+='<button class="big go" data-act="empezar" data-id="'+p.id+'">▶ EMPEZAR</button>';
   var n=+p.nfotos||0;
-  return '<div class="tr" style="margin-top:6px">'+(n?'<button class="btn bmsg" data-act="verfotos" data-id="'+p.id+'">🖼️ Ver fotos ('+n+')</button>':'')+'<button class="btn bmsg" data-act="foto" data-id="'+p.id+'">📷 Añadir foto</button></div>';
+  h+='<div class="sm"><button data-act="foto" data-id="'+p.id+'">📷 Foto</button>'+(n?'<button data-act="verfotos" data-id="'+p.id+'">🖼️ Fotos ('+n+')</button>':'')+'<button data-act="nota" data-id="'+p.id+'">📝 Nota</button></div>';
+  return h;
 }
+function runBanner(){
+  var r=D.partes.filter(function(p){return p.inicio&&p.estado!=='terminado'})[0];
+  if(!r){$('runEl').innerHTML='';return}
+  var m=minAhora(r);
+  $('runEl').innerHTML='<div class="run"><h3>🔧 Estás trabajando en '+esc(r.apartamento).toUpperCase()+'</h3><div class="tm" data-clock="'+r.id+'">'+reloj(m)+'</div><div class="eu" data-eur="'+r.id+'">'+eur(cuesta(r,m))+' de mano de obra</div><button class="big stop" data-act="fin" data-id="'+r.id+'">⏹ TERMINAR</button></div>';
+}
+setInterval(function(){if(!D)return;[].forEach.call(document.querySelectorAll('[data-clock]'),function(e){var p=parte(e.dataset.clock);if(p)e.textContent=reloj(minAhora(p))});
+  [].forEach.call(document.querySelectorAll('[data-eur]'),function(e){var p=parte(e.dataset.eur);if(p)e.textContent=eur(cuesta(p,minAhora(p)))+' de mano de obra'});
+  var fm=$('fMin');if(fm&&MOD&&MOD.id){var p=parte(MOD.id);if(p)pintaFin(p)}},1000);
 // Reduce la foto en el móvil (máx. 1280 px, JPEG) antes de subirla: ocupa poco y sube rápido con mala cobertura.
 function reducir(file){return new Promise(function(ok,ko){
   var fr=new FileReader();fr.onerror=function(){ko(new Error('no_se_pudo_leer'))};
@@ -240,7 +284,7 @@ function filaParte(p){
   var e=EST[p.estado]||[p.estado,'pen'];
   var h='<li><div class="desc">'+(p.urgente?'🔴 ':'')+esc(p.descripcion)+'</div><div class="loc">'+esc(e[0])+' · avisó '+esc(p.reporta||'—')+' · '+fecha(p.creado)+'</div>';
   (p.notas||[]).forEach(function(n){h+='<div class="nt"><b>'+esc(n.por)+':</b> '+esc(n.texto)+'</div>'});
-  h+='<div class="tr">'+(p.estado!=='en_curso'?'<button class="btn bstart" data-act="coger" data-id="'+p.id+'">▶ Lo empiezo yo</button>':'<button class="btn bstart" data-act="fin" data-id="'+p.id+'">✅ Terminado</button>')+'<button class="btn bmsg" data-act="nota" data-id="'+p.id+'" style="flex:0 0 auto">📝 Nota</button></div>'+fotosBar(p)+'</li>';
+  h+=botones(p)+'</li>';
   return h;
 }
 function porApt(ab){var m={};ab.forEach(function(p){(m[p.apartamento]=m[p.apartamento]||[]).push(p)});return m}
@@ -287,7 +331,10 @@ function weekView(ab){
     rows+='<tr><td><b>'+esc(id)+'</b> <span style="color:var(--mt)">('+m[id].length+')</span></td>'+days.map(function(d){var s=estado(id,d),l=s.s==='libre'?'Libre':s.s==='ocupado'?'Ocupado':s.s==='bloq'?'Cerrado':/^Libre hasta/.test(s.t)?'Hasta '+s.t.match(/\d{2}:\d{2}/)[0]:'11–'+(s.t.match(/a (\d{2}:\d{2})$/)||[0,'17:00'])[1];return'<td><span class="cl s-'+s.s+'">'+l+'</span></td>'}).join('')+'</tr>'});
   return'<h3 class="dh2">Semana</h3><p class="loc">Cuándo se puede entrar en cada apartamento con arreglos. Entre paréntesis, cuántos arreglos tiene.</p><div class="wk"><table><thead><tr><th>Apartamento</th>'+days.map(function(d){return'<th>'+corto(d)+'</th>'}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
-function modal(html){MOD=true;$('modal').hidden=false;$('modal').innerHTML='<div class="modal-bg"><div class="modal">'+html+'</div></div>'}
+function pintaFin(p){var el=$('fSum');if(!el||!p)return;var m=minAhora(p),mo=cuesta(p,m),mt=(p.mats||[]).reduce(function(a,x){return a+(+x.precio||0)},0);
+  el.innerHTML='<div class="hr"><span>⏱️ Tiempo trabajado</span><b id="fMin">'+dur(m)+'</b></div><div class="hr"><span>Mano de obra ('+tarifa(p)+' € la hora)</span><b>'+eur(mo)+'</b></div><div class="hr"><span>Piezas</span><b>'+eur(mt)+'</b></div><div class="hr"><span>TOTAL</span><span class="tt">'+eur(mo+mt)+'</span></div>'+(p.inicio?'':(m?'':'<p class="loc">No se ha pulsado EMPEZAR: el tiempo es 0. Si has trabajado, avisa a Recepción.</p>'))}
+function pintaMats(p){var el=$('fMat');if(!el||!p)return;var ms=p.mats||[];el.innerHTML=ms.length?ms.map(function(x){return'<li><span>'+esc(x.concepto)+' · <b>'+eur(x.precio)+'</b></span><button data-act="matdel" data-mid="'+x.id+'">✖ Quitar</button></li>'}).join(''):'<li style="color:var(--mt);font-size:14px">Ninguna pieza todavía.</li>';pintaFin(p)}
+function modal(html,id){MOD={id:id||null};$('modal').hidden=false;$('modal').innerHTML='<div class="modal-bg"><div class="modal">'+html+'</div></div>'}
 function closeModal(){MOD=null;$('modal').hidden=true;$('modal').innerHTML=''}
 setInterval(function(){if(!MOD&&!BUSY&&document.visibilityState==='visible')load(true)},60000);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&!MOD)load(true)});
@@ -298,11 +345,29 @@ document.addEventListener('click',async function(ev){
   if(t.dataset.tab){['tPar','tFin','tHrs'].forEach(function(id){$(id).hidden=id!==t.dataset.tab});[].forEach.call(document.querySelectorAll('.nb'),function(b){b.classList.toggle('act',b===t)});window.scrollTo(0,0);return}
   var a=t.dataset.act,id=t.dataset.id,p=id?parte(id):null;
   if(a==='close')closeModal();
-  else if(a==='coger')act('parte_actualizar',{p_id:+id,p_estado:'en_curso',p_horas:null,p_materiales:null,p_coste_materiales:null,p_nota:null},'👷 Apuntado a tu nombre');
+  else if(a==='empezar'){var otro=D.partes.filter(function(x){return x.inicio&&x.id!==+id})[0];
+    modal('<h3>▶ '+(minAhora(p)>0?'Seguir':'Empezar')+' en '+esc(p.apartamento).toUpperCase()+'</h3><p style="font-size:16px;line-height:1.5;text-align:center;margin-bottom:14px">'+esc(p.descripcion)+'</p><p style="font-size:15px;text-align:center;margin-bottom:14px">El reloj empieza a contar ahora.'+(otro?'<br><b>El reloj de '+esc(otro.apartamento)+' se para solo.</b>':'')+'</p><button class="big go" data-act="empezarok" data-id="'+id+'">✅ SÍ, EMPIEZO</button><button class="blink" data-act="close" style="font-size:15px">No, volver</button>')}
+  else if(a==='empezarok'){closeModal();act('parte_empezar',{p_id:+id},'▶ Reloj en marcha en '+p.apartamento)}
+  else if(a==='pausa')modal('<h3>⏸ Te vas de '+esc(p.apartamento).toUpperCase()+'</h3><p style="font-size:15px;text-align:center;margin-bottom:14px">El reloj se para. Cuando vuelvas, pulsa <b>▶ SEGUIR</b>.</p><button class="big go" data-act="pausaok" data-id="'+id+'">✅ SÍ, PARAR EL RELOJ</button><button class="blink" data-act="close" style="font-size:15px">No, sigo trabajando</button>')
+  else if(a==='pausaok'){closeModal();act('parte_pausar',{p_id:+id},'⏸ Reloj parado. ¡Hasta luego!')}
+  else if(a==='matadd'){var co=$('mMc').value.trim(),pr=num($('mMp').value);if(!co){toast('Escribe qué pieza es');$('mMc').focus();return}if(!$('mMp').value.trim()){toast('Escribe cuánto ha costado');$('mMp').focus();return}
+    var ok=await act('parte_material',{p_id:+id,p_concepto:co,p_precio:pr},'🧾 '+co+' añadido');if(ok&&$('mMc')){$('mMc').value='';$('mMp').value=''}}
+  else if(a==='matdel'){act('parte_material_borrar',{p_mid:+t.dataset.mid},'Quitado')}
   else if(a==='nota')modal('<h3>📝 Nota en '+esc(p.apartamento)+'</h3><textarea class="fi" id="mN" rows="3" placeholder="Qué has visto, qué falta, cuándo vuelves…"></textarea><button class="bsub" data-act="notaok" data-id="'+id+'">Guardar nota</button><button class="blink" data-act="close">Cancelar</button>');
   else if(a==='notaok'){var n=$('mN').value.trim();if(!n){toast('Escribe la nota');return}closeModal();act('parte_actualizar',{p_id:+id,p_estado:null,p_horas:null,p_materiales:null,p_coste_materiales:null,p_nota:n},'📝 Nota guardada')}
-  else if(a==='fin')modal('<h3>✅ Terminar: '+esc(p.apartamento)+'</h3><label class="lb" for="mH">Horas trabajadas</label><input class="fi" id="mH" inputmode="decimal" placeholder="Ejemplo: 1,5"><label class="lb" for="mM">Materiales usados (si has comprado algo)</label><input class="fi" id="mM" placeholder="Ejemplo: grifo, silicona"><label class="lb" for="mC">Coste de los materiales en euros</label><input class="fi" id="mC" inputmode="decimal" placeholder="Ejemplo: 23,50"><label class="lb" for="mF">Qué has hecho</label><textarea class="fi" id="mF" rows="2" placeholder="Ejemplo: cambiado el grifo de la cocina"></textarea><p style="font-size:12px;color:var(--mt);margin-bottom:8px">Guarda el tique de la compra y mándalo por WhatsApp a Recepción.</p><button class="bsub" data-act="finok" data-id="'+id+'" style="background:var(--ok)">Guardar y terminar</button><button class="blink" data-act="close">Volver</button>');
-  else if(a==='finok'){var hh=num($('mH').value);if(!hh){toast('Pon las horas trabajadas');return}var mm=$('mM').value.trim(),cc=num($('mC').value),ff=$('mF').value.trim();closeModal();act('parte_actualizar',{p_id:+id,p_estado:'terminado',p_horas:hh,p_materiales:mm||null,p_coste_materiales:cc,p_nota:ff||null},'✅ Trabajo terminado. ¡Gracias!')}
+  else if(a==='fin'){modal('<h3>⏹ Terminar en '+esc(p.apartamento).toUpperCase()+'</h3><div class="sum" id="fSum"></div>'+
+    '<label class="lb">🧾 ¿Has puesto alguna pieza? (enchufe, grifo, bombilla…)</label><ul class="matl" id="fMat"></ul>'+
+    '<div class="mrow"><input class="fi" id="mMc" placeholder="Qué es: enchufe" autocomplete="off"><input class="fi" id="mMp" inputmode="decimal" placeholder="€: 5" autocomplete="off"></div>'+
+    '<button class="bsub" data-act="matadd" data-id="'+id+'" style="margin-bottom:12px">➕ Añadir pieza</button>'+
+    '<label class="lb" for="mF">¿Qué has hecho? <span style="font-weight:500;color:var(--mt)">(no hace falta)</span></label><textarea class="fi" id="mF" rows="2" placeholder="Ejemplo: cambiado el enchufe del salón"></textarea>'+
+    '<p style="font-size:13px;color:var(--mt);margin-bottom:10px">Guarda el tique de la compra y mándale una foto a Recepción por WhatsApp.</p>'+
+    '<button class="big go" data-act="finok" data-id="'+id+'">✅ GUARDAR Y TERMINAR</button><button class="blink" data-act="close" style="font-size:15px">Volver (el reloj sigue)</button>',+id);pintaFin(p);pintaMats(p)}
+  else if(a==='finok'){var co2=$('mMc').value.trim();if(co2||$('mMp').value.trim()){toast('Tienes una pieza sin añadir: pulsa ➕ Añadir pieza o borra lo escrito');return}
+    var ff=$('mF').value.trim();closeModal();
+    if(BUSY)return;BUSY=true;$('sync').textContent='Guardando…';
+    try{var r=await rpc('parte_terminar',{p_id:+id,p_nota:ff||null});BUSY=false;await load(true);
+      modal('<h3>✅ ¡Terminado! Gracias</h3><div class="sum"><div class="hr"><span>⏱️ Tiempo</span><b>'+dur(+r.minutos)+'</b></div><div class="hr"><span>Mano de obra</span><b>'+eur(r.mano_obra)+'</b></div><div class="hr"><span>Piezas</span><b>'+eur(r.materiales)+'</b></div><div class="hr"><span>TOTAL</span><span class="tt">'+eur(r.total)+'</span></div></div><p class="loc" style="text-align:center;margin-bottom:10px">Queda apuntado en '+esc(p.apartamento)+'.</p><button class="big go" data-act="close">OK</button>')}
+    catch(e){BUSY=false;$('sync').textContent='Sin guardar';toast(e.codigo==='sin_conexion'?'No se ha guardado: no hay conexión. Vuelve a pulsar TERMINAR.':'No se ha podido guardar. Avisa a Recepción.')}}
   else if(a==='foto'){FOTO_ID=+id;$('fotoIn').value='';$('fotoIn').click()}
   else if(a==='verfotos'){modal('<h3>🖼️ Fotos · '+esc(p.apartamento)+'</h3><p class="loc">Cargando…</p><button class="blink" data-act="close">Cerrar</button>');
     try{var fs=await rpc('parte_fotos',{p_id:+id});if(!MOD)return;modal('<h3>🖼️ Fotos · '+esc(p.apartamento)+'</h3>'+(fs.length?fs.map(function(f){return'<figure style="margin:0 0 12px"><img src="'+esc(f.datos)+'" alt="Foto del arreglo" style="width:100%;border-radius:10px;display:block"><figcaption class="loc">'+esc(f.por||'')+' · '+fecha(f.creado)+'</figcaption></figure>'}).join(''):'<p class="empty">Sin fotos.</p>')+'<button class="blink" data-act="close">Cerrar</button>')}
