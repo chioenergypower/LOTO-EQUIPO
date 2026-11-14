@@ -73,6 +73,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:flex;align-items:center;justify-content:center;padding:16px}
 .modal{background:var(--card);border-radius:var(--r);padding:20px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto}
 .modal h3{font-size:18px;margin-bottom:12px;text-align:center}
+.aviso{background:var(--wnl);color:var(--wn);border-radius:var(--rs);padding:10px;font-size:15px;font-weight:600;margin:8px 0}
+.real{background:var(--wnl);border:2px solid var(--wn);border-radius:var(--r);padding:12px;margin:10px 0 14px}
+.real p{font-size:16px;line-height:1.45;margin-bottom:10px;color:var(--fg)}
+.real .ops{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.real .ops button{font-size:17px;font-weight:700;padding:14px 6px;border-radius:var(--rs);border:2px solid var(--bd);background:var(--card);color:var(--fg)}
+.real .ops button:last-child{grid-column:1/-1}
+.real .ops button.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .chk{padding:9px 0;border-bottom:1px solid var(--bd);font-size:14px;display:flex;align-items:center;gap:10px}.chk input{width:20px;height:20px;accent-color:var(--ok);flex:none}
 .wd{padding:10px 0;border-bottom:1px solid var(--bd)}.wd:last-child{border:none}
 .wh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}.wh b{font-family:var(--fd);font-size:15px;display:inline-block}.wh b::first-letter{text-transform:uppercase}.wh span{font-size:12px;color:var(--mt);text-align:right}
@@ -219,7 +226,7 @@ function card(p){
 var OFF=0;
 function minAhora(p){var m=+p.minutos||0;if(p.inicio)m+=Math.max(0,(Date.now()+OFF-new Date(p.inicio).getTime())/60000);return m}
 function tarifa(p){return +(p&&p.tarifa)||+D.tarifa||30}
-function dur(m){m=Math.floor(m);var h=Math.floor(m/60),mm=m%60;return h?h+' h '+mm+' min':mm+' min'}
+function dur(m){m=Math.floor(m);var h=Math.floor(m/60),mm=m%60;return h?h+' h'+(mm?' '+mm+' min':''):mm+' min'}
 function reloj(m){var s=Math.floor(m*60),h=Math.floor(s/3600),mi=Math.floor(s%3600/60),se=s%60;return h+':'+String(mi).padStart(2,'0')+':'+String(se).padStart(2,'0')}
 function cuesta(p,m){return Math.round(m/60*tarifa(p)*100)/100}
 // Botones de cada arreglo: uno grande según el momento + fila pequeña (foto y nota).
@@ -236,8 +243,16 @@ function runBanner(){
   var r=D.partes.filter(function(p){return p.inicio&&p.estado!=='terminado'})[0];
   if(!r){$('runEl').innerHTML='';return}
   var m=minAhora(r);
-  $('runEl').innerHTML='<div class="run"><h3>🔧 Estás trabajando en '+esc(r.apartamento).toUpperCase()+'</h3><div class="tm" data-clock="'+r.id+'">'+reloj(m)+'</div><div class="eu" data-eur="'+r.id+'">'+eur(cuesta(r,m))+' de mano de obra</div><button class="big stop" data-act="fin" data-id="'+r.id+'">⏹ TERMINAR</button></div>';
+  $('runEl').innerHTML='<div class="run"><h3>🔧 Estás trabajando en '+esc(r.apartamento).toUpperCase()+'</h3><div class="tm" data-clock="'+r.id+'">'+reloj(m)+'</div><div class="eu" data-eur="'+r.id+'">'+eur(cuesta(r,m))+' de mano de obra</div>'+(largo(r,m)?'<p class="aviso">⚠️ El reloj lleva más de 1 hora. Si ya has terminado, pulsa ⏹ TERMINAR.</p>':'')+'<button class="big stop" data-act="fin" data-id="'+r.id+'">⏹ TERMINAR</button></div>';
 }
+// R-14.14: si el reloj ha contado mucho (más de 1 hora, o más del doble de lo estimado), al terminar se pregunta el tiempo real.
+function largo(p,m){return m>60||(+p.estimado>0&&m>2*(+p.estimado))}
+function pintaReal(p){var el=$('fReal');if(!el||!p||!MOD)return;var m=minAhora(p);
+  if(!largo(p,m)){el.innerHTML='';MOD.real=null;return}
+  var ops=[15,30,45,60,90,120].filter(function(x){return x<m}),sel=MOD.real;
+  el.innerHTML='<div class="real"><p><b>⚠️ El reloj ha contado '+dur(m)+'.</b><br>Normalmente un trabajo no pasa de 1 hora. ¿Cuánto has trabajado de verdad?</p><div class="ops">'+
+    ops.map(function(x){return'<button data-act="real" data-min="'+x+'" class="'+(sel===x?'on':'')+'">'+dur(x)+'</button>'}).join('')+
+    '<button data-act="real" data-min="ok" class="'+(sel==='ok'?'on':'')+'">✅ Es correcto ('+dur(m)+')</button></div></div>'}
 setInterval(function(){if(!D)return;[].forEach.call(document.querySelectorAll('[data-clock]'),function(e){var p=parte(e.dataset.clock);if(p)e.textContent=reloj(minAhora(p))});
   [].forEach.call(document.querySelectorAll('[data-eur]'),function(e){var p=parte(e.dataset.eur);if(p)e.textContent=eur(cuesta(p,minAhora(p)))+' de mano de obra'});
   var fm=$('fMin');if(fm&&MOD&&MOD.id){var p=parte(MOD.id);if(p)pintaFin(p)}},1000);
@@ -355,17 +370,20 @@ document.addEventListener('click',async function(ev){
   else if(a==='matdel'){act('parte_material_borrar',{p_mid:+t.dataset.mid},'Quitado')}
   else if(a==='nota')modal('<h3>📝 Nota en '+esc(p.apartamento)+'</h3><textarea class="fi" id="mN" rows="3" placeholder="Qué has visto, qué falta, cuándo vuelves…"></textarea><button class="bsub" data-act="notaok" data-id="'+id+'">Guardar nota</button><button class="blink" data-act="close">Cancelar</button>');
   else if(a==='notaok'){var n=$('mN').value.trim();if(!n){toast('Escribe la nota');return}closeModal();act('parte_actualizar',{p_id:+id,p_estado:null,p_horas:null,p_materiales:null,p_coste_materiales:null,p_nota:n},'📝 Nota guardada')}
-  else if(a==='fin'){modal('<h3>⏹ Terminar en '+esc(p.apartamento).toUpperCase()+'</h3><div class="sum" id="fSum"></div>'+
+  else if(a==='real'){if(!MOD||!MOD.id)return;var v=t.dataset.min;MOD.real=v==='ok'?'ok':+v;pintaReal(parte(MOD.id))}
+  else if(a==='fin'){modal('<h3>⏹ Terminar en '+esc(p.apartamento).toUpperCase()+'</h3><div class="sum" id="fSum"></div><div id="fReal"></div>'+
     '<label class="lb">🧾 ¿Has puesto alguna pieza? (enchufe, grifo, bombilla…)</label><ul class="matl" id="fMat"></ul>'+
     '<div class="mrow"><input class="fi" id="mMc" placeholder="Qué es: enchufe" autocomplete="off"><input class="fi" id="mMp" inputmode="decimal" placeholder="€: 5" autocomplete="off"></div>'+
     '<button class="bsub" data-act="matadd" data-id="'+id+'" style="margin-bottom:12px">➕ Añadir pieza</button>'+
     '<label class="lb" for="mF">¿Qué has hecho? <span style="font-weight:500;color:var(--mt)">(no hace falta)</span></label><textarea class="fi" id="mF" rows="2" placeholder="Ejemplo: cambiado el enchufe del salón"></textarea>'+
     '<p style="font-size:13px;color:var(--mt);margin-bottom:10px">Guarda el tique de la compra y mándale una foto a Recepción por WhatsApp.</p>'+
-    '<button class="big go" data-act="finok" data-id="'+id+'">✅ GUARDAR Y TERMINAR</button><button class="blink" data-act="close" style="font-size:15px">Volver (el reloj sigue)</button>',+id);pintaFin(p);pintaMats(p)}
+    '<button class="big go" data-act="finok" data-id="'+id+'">✅ GUARDAR Y TERMINAR</button><button class="blink" data-act="close" style="font-size:15px">Volver (el reloj sigue)</button>',+id);pintaFin(p);pintaMats(p);pintaReal(p)}
   else if(a==='finok'){var co2=$('mMc').value.trim();if(co2||$('mMp').value.trim()){toast('Tienes una pieza sin añadir: pulsa ➕ Añadir pieza o borra lo escrito');return}
+    var real=MOD&&MOD.real;if(largo(p,minAhora(p))&&!real){toast('Dinos cuánto has trabajado de verdad (arriba) ⬆️');var rb=$('fReal');if(rb)rb.scrollIntoView({behavior:'smooth',block:'center'});return}
     var ff=$('mF').value.trim();closeModal();
     if(BUSY)return;BUSY=true;$('sync').textContent='Guardando…';
-    try{var r=await rpc('parte_terminar',{p_id:+id,p_nota:ff||null});BUSY=false;await load(true);
+    try{if(typeof real==='number'&&real<minAhora(p))await rpc('parte_tiempo_real',{p_id:+id,p_minutos:real});
+      var r=await rpc('parte_terminar',{p_id:+id,p_nota:ff||null});BUSY=false;await load(true);
       modal('<h3>✅ ¡Terminado! Gracias</h3><div class="sum"><div class="hr"><span>⏱️ Tiempo</span><b>'+dur(+r.minutos)+'</b></div><div class="hr"><span>Mano de obra</span><b>'+eur(r.mano_obra)+'</b></div><div class="hr"><span>Piezas</span><b>'+eur(r.materiales)+'</b></div><div class="hr"><span>TOTAL</span><span class="tt">'+eur(r.total)+'</span></div></div><p class="loc" style="text-align:center;margin-bottom:10px">Queda apuntado en '+esc(p.apartamento)+'.</p><button class="big go" data-act="close">OK</button>')}
     catch(e){BUSY=false;$('sync').textContent='Sin guardar';toast(e.codigo==='sin_conexion'?'No se ha guardado: no hay conexión. Vuelve a pulsar TERMINAR.':'No se ha podido guardar. Avisa a Recepción.')}}
   else if(a==='foto'){FOTO_ID=+id;$('fotoIn').value='';$('fotoIn').click()}
