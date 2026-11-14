@@ -32,7 +32,7 @@ create or replace function _parte_recalc(p_id bigint) returns void
 language sql security definer set search_path = public as $$
   update partes p set
     horas = round(p.minutos / 60.0, 2),
-    coste_mano_obra = round(p.minutos / 60.0 * coalesce(p.tarifa, (select valor from ajustes where clave = 'tarifa_mantenimiento'), 30), 2),
+    coste_mano_obra = round(p.minutos / 60.0 * coalesce(p.tarifa, (select (valor#>>'{}')::numeric from ajustes where clave = 'tarifa_mantenimiento'), 30), 2),
     coste_materiales = coalesce((select sum(m.precio) from partes_materiales m where m.parte_id = p.id), 0),
     materiales = (select string_agg(m.concepto || ' (' || to_char(m.precio, 'FM999990.00') || ' €)', ', ' order by m.id)
                     from partes_materiales m where m.parte_id = p.id)
@@ -64,7 +64,7 @@ begin
   perform _parte_parar(id) from partes where inicio is not null and id <> p_id and asignado = yo.id;
   update partes set estado = 'en_curso', asignado = coalesce(asignado, yo.id),
          inicio = coalesce(inicio, now()),
-         tarifa = coalesce(tarifa, (select valor from ajustes where clave = 'tarifa_mantenimiento'), 30)
+         tarifa = coalesce(tarifa, (select (valor#>>'{}')::numeric from ajustes where clave = 'tarifa_mantenimiento'), 30)
    where id = p_id;
   return jsonb_build_object('pausado', otro);
 end $$;
@@ -86,7 +86,7 @@ begin
   yo := _quien(p_k); perform _puede_mant(yo);
   perform _parte_parar(p_id);
   update partes p set estado = 'terminado', cerrado = now(), asignado = coalesce(p.asignado, yo.id),
-         tarifa = coalesce(p.tarifa, (select valor from ajustes where clave = 'tarifa_mantenimiento'), 30),
+         tarifa = coalesce(p.tarifa, (select (valor#>>'{}')::numeric from ajustes where clave = 'tarifa_mantenimiento'), 30),
          cargo_propietario = coalesce((select a.cobrar_mantenimiento from apartamentos a where a.id = p.apartamento), true),
          notas = case when length(trim(coalesce(p_nota, ''))) > 0
                       then p.notas || jsonb_build_object('ts', now(), 'por', yo.nombre, 'texto', 'Hecho: ' || left(trim(p_nota), 600))
@@ -170,7 +170,7 @@ begin
   return jsonb_build_object(
     'yo', jsonb_build_object('id', yo.id, 'nombre', yo.nombre, 'rol', yo.rol),
     'hoy', h, 'ahora', now(),
-    'tarifa', (select valor from ajustes where clave = 'tarifa_mantenimiento'),
+    'tarifa', (select (valor#>>'{}')::numeric from ajustes where clave = 'tarifa_mantenimiento'),
     'apartamentos', (select coalesce(jsonb_agg(jsonb_build_object(
         'id', a.id, 'edificio', a.edificio, 'planta', a.planta, 'puerta', a.puerta,
         'cajetin', case when ver_codigos then a.cajetin end,
