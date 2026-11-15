@@ -76,7 +76,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .aviso{background:var(--wnl);color:var(--wn);border-radius:var(--rs);padding:10px;font-size:15px;font-weight:600;margin:8px 0}
 .real{background:var(--wnl);border:2px solid var(--wn);border-radius:var(--r);padding:12px;margin:10px 0 14px}
 .real p{font-size:16px;line-height:1.45;margin-bottom:10px;color:var(--fg)}
-.real .ops{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.real .ops{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .real .ops button{font-size:17px;font-weight:700;padding:14px 6px;border-radius:var(--rs);border:2px solid var(--bd);background:var(--card);color:var(--fg)}
 .real .ops button:last-child{grid-column:1/-1}
 .real .ops button.on{background:var(--ok);border-color:var(--ok);color:#fff}
@@ -243,14 +243,16 @@ function runBanner(){
   var r=D.partes.filter(function(p){return p.inicio&&p.estado!=='terminado'})[0];
   if(!r){$('runEl').innerHTML='';return}
   var m=minAhora(r);
-  $('runEl').innerHTML='<div class="run"><h3>🔧 Estás trabajando en '+esc(r.apartamento).toUpperCase()+'</h3><div class="tm" data-clock="'+r.id+'">'+reloj(m)+'</div><div class="eu" data-eur="'+r.id+'">'+eur(cuesta(r,m))+' de mano de obra</div>'+(largo(r,m)?'<p class="aviso">⚠️ El reloj lleva más de 1 hora. Si ya has terminado, pulsa ⏹ TERMINAR.</p>':'')+'<button class="big stop" data-act="fin" data-id="'+r.id+'">⏹ TERMINAR</button></div>';
+  $('runEl').innerHTML='<div class="run"><h3>🔧 Estás trabajando en '+esc(r.apartamento).toUpperCase()+'</h3><div class="tm" data-clock="'+r.id+'">'+reloj(m)+'</div><div class="eu" data-eur="'+r.id+'">'+eur(cuesta(r,m))+' de mano de obra</div>'+(largo(r,m)?'<p class="aviso">⚠️ Llevas más tiempo del previsto ('+dur(limite(r))+'). Si ya has terminado, pulsa ⏹ TERMINAR.</p>':'')+'<button class="big stop" data-act="fin" data-id="'+r.id+'">⏹ TERMINAR</button></div>';
 }
 // R-14.14: si el reloj ha contado mucho (más de 1 hora, o más del doble de lo estimado), al terminar se pregunta el tiempo real.
-function largo(p,m){return m>60||(+p.estimado>0&&m>2*(+p.estimado))}
+// R-14.14 (Chio 15/11 01:03): se pregunta en CADA parte, por separado, si el reloj pasa del tiempo estimado (o de 1 hora si no hay estimación).
+function limite(p){return +p.estimado>0?+p.estimado:60}
+function largo(p,m){return m>limite(p)}
 function pintaReal(p){var el=$('fReal');if(!el||!p||!MOD)return;var m=minAhora(p);
   if(!largo(p,m)){el.innerHTML='';MOD.real=null;return}
-  var ops=[15,30,45,60,90,120].filter(function(x){return x<m}),sel=MOD.real;
-  el.innerHTML='<div class="real"><p><b>⚠️ El reloj ha contado '+dur(m)+'.</b><br>Normalmente un trabajo no pasa de 1 hora. ¿Cuánto has trabajado de verdad?</p><div class="ops">'+
+  var ops=[5,10,15,20,30,45,60,90,120],sel=MOD.real;
+  el.innerHTML='<div class="real"><p><b>⚠️ '+esc(p.apartamento).toUpperCase()+': el reloj ha contado '+dur(m)+'.</b><br>Para este trabajo calculábamos unos '+dur(limite(p))+'. ¿Cuánto has trabajado de verdad?</p><div class="ops">'+
     ops.map(function(x){return'<button data-act="real" data-min="'+x+'" class="'+(sel===x?'on':'')+'">'+dur(x)+'</button>'}).join('')+
     '<button data-act="real" data-min="ok" class="'+(sel==='ok'?'on':'')+'">✅ Es correcto ('+dur(m)+')</button></div></div>'}
 setInterval(function(){if(!D)return;[].forEach.call(document.querySelectorAll('[data-clock]'),function(e){var p=parte(e.dataset.clock);if(p)e.textContent=reloj(minAhora(p))});
@@ -382,7 +384,7 @@ document.addEventListener('click',async function(ev){
     var real=MOD&&MOD.real;if(largo(p,minAhora(p))&&!real){toast('Dinos cuánto has trabajado de verdad (arriba) ⬆️');var rb=$('fReal');if(rb)rb.scrollIntoView({behavior:'smooth',block:'center'});return}
     var ff=$('mF').value.trim();closeModal();
     if(BUSY)return;BUSY=true;$('sync').textContent='Guardando…';
-    try{if(typeof real==='number'&&real<minAhora(p))await rpc('parte_tiempo_real',{p_id:+id,p_minutos:real});
+    try{if(typeof real==='number'&&Math.round(real)!==Math.round(minAhora(p)))await rpc('parte_tiempo_real',{p_id:+id,p_minutos:real});
       var r=await rpc('parte_terminar',{p_id:+id,p_nota:ff||null});BUSY=false;await load(true);
       modal('<h3>✅ ¡Terminado! Gracias</h3><div class="sum"><div class="hr"><span>⏱️ Tiempo</span><b>'+dur(+r.minutos)+'</b></div><div class="hr"><span>Mano de obra</span><b>'+eur(r.mano_obra)+'</b></div><div class="hr"><span>Piezas</span><b>'+eur(r.materiales)+'</b></div><div class="hr"><span>TOTAL</span><span class="tt">'+eur(r.total)+'</span></div></div><p class="loc" style="text-align:center;margin-bottom:10px">Queda apuntado en '+esc(p.apartamento)+'.</p><button class="big go" data-act="close">OK</button>')}
     catch(e){BUSY=false;$('sync').textContent='Sin guardar';toast(e.codigo==='sin_conexion'?'No se ha guardado: no hay conexión. Vuelve a pulsar TERMINAR.':'No se ha podido guardar. Avisa a Recepción.')}}

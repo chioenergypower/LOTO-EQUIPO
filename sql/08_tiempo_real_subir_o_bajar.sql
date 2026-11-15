@@ -1,0 +1,2 @@
+-- 08 · Chio 15/11 01:03: José puede SUBIR o BAJAR el tiempo (5 min a 10 h). Se le pregunta en cada parte si pasa de lo estimado.
+-- (Misma función parte_tiempo_real de la 07, quitando el límite «solo bajar».) Aplicada en Supabase.
