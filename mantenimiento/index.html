@@ -140,13 +140,15 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--fg);margin:4px
 <div id="app" hidden>
   <div class="bar"><div><h2 id="uName"></h2><div class="dt" id="uDate"></div></div><span class="st" id="sync">Al día</span></div>
   <div class="tab" id="tPar">
+    <div id="jorEl"></div>
     <div id="runEl"></div>
     <details class="guia" id="guiaEl"><summary>📖 Cómo se usa (pulsa aquí)</summary><ol>
+      <li><b>Al empezar el día</b> (cuando te pones a preparar las herramientas) pulsa <b>🟢 COMIENZO JORNADA</b>. <b>Al terminar</b> (con todo guardado) pulsa <b>🔴 ACABO JORNADA</b>. Lo que no es de ningún apartamento cuenta como <b>Taller</b>.</li>
       <li><b>Al llegar al apartamento</b>, busca su arreglo y pulsa <b>▶ EMPEZAR</b>. El reloj empieza a contar solo.</li>
       <li>Haz el trabajo tranquilo. Arriba verás el tiempo que llevas.</li>
       <li><b>Al acabar</b>, pulsa <b>⏹ TERMINAR</b>.</li>
       <li>Si has puesto alguna pieza (un enchufe, un grifo…), escribe <b>qué es</b> y <b>cuánto ha costado</b> y pulsa <b>➕ Añadir</b>.</li>
-      <li>Pulsa <b>✅ GUARDAR</b>. Ya está: las horas (a 30 € la hora) y las piezas se apuntan solas.</li>
+      <li>Pulsa <b>✅ GUARDAR</b>. Ya está: el tiempo y las piezas se apuntan solos.</li>
     </ol><p class="loc" style="margin-top:6px">Si tienes que irte y volver otro día, pulsa <b>⏸ Me voy, vuelvo otro día</b>: el reloj se para y al volver pulsas <b>▶ SEGUIR</b>.</p></details>
     <div class="aviso">🔑 El día de salida de un cliente solo se puede entrar de <b>11:00 a 17:00</b>. La puerta la abre el equipo de limpieza.</div>
     <div class="stats" id="statsEl"></div>
@@ -169,7 +171,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--fg);margin:4px
 <script src="../api.js"></script>
 <script>
 "use strict";
-var D=null,BUSY=false,MOD=null,FIL='Todos',VIS='hoy';try{VIS=localStorage.getItem('mant-vis')||'hoy'}catch(e){}
+var D=null,J=null,BUSY=false,MOD=null,FIL='Todos',VIS='hoy';try{VIS=localStorage.getItem('mant-vis')||'hoy'}catch(e){}
 var DAY=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],MON=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 var EST={pendiente:['Pendiente','pen'],asignado:['Asignado','pen'],en_curso:['En curso','cur'],terminado:['Terminado','fin']};
 function $(i){return document.getElementById(i)}
@@ -181,7 +183,7 @@ function num(v){return parseFloat(String(v||'0').replace(',','.'))||0}
 function gate(txt){$('app').hidden=true;$('gate').hidden=false;$('gateTxt').textContent=txt}
 async function load(silent){
   if(!lotoClave()){gate('Abre esta página con tu enlace personal. Si no lo tienes, pídeselo a Recepción.');return}
-  try{D=await rpc('mis_partes');if(D.ahora)OFF=new Date(D.ahora).getTime()-Date.now();$('gate').hidden=true;$('app').hidden=false;$('sync').textContent='Al día';render()}
+  try{D=await rpc('mis_partes');try{J=await rpc('mi_jornada_mant')}catch(e){if(e.codigo==='enlace_no_valido')throw e}if(D.ahora)OFF=new Date(D.ahora).getTime()-Date.now();$('gate').hidden=true;$('app').hidden=false;$('sync').textContent='Al día';render()}
   catch(e){
     if(e.codigo==='enlace_no_valido'){lotoOlvidar();gate('Este enlace ya no es válido. Pide uno nuevo a Recepción.')}
     else if(!D)gate('No hay conexión. Comprueba la cobertura; la página volverá a intentarlo sola.');
@@ -209,11 +211,29 @@ function render(){
   else if(VIS==='sem')$('parEl').innerHTML=weekView(ab);
   else{var vis=ab.filter(function(p){return FIL==='Todos'||(FIL==='Míos'?p.mio:p.edificio===FIL)});
   $('parEl').innerHTML=vis.length?'<div class="grid">'+vis.map(card).join('')+'</div>':'<div class="empty">'+(ab.length?'No hay partes en este filtro.':'🎉 No hay averías pendientes.')+'</div>';}
-  $('finEl').innerHTML=fi.length?fi.map(function(p){return'<div class="hr"><span><b>'+esc(p.apartamento)+'</b> · '+esc(p.descripcion)+'<br><span style="color:var(--mt);font-size:12px">'+fecha(p.cerrado)+' · '+dur(+p.minutos||(+p.horas*60))+' → '+eur(p.mano_obra)+(+p.coste_materiales?' · piezas '+eur(p.coste_materiales):'')+'</span></span><b>'+eur(p.total)+'</b></div>'}).join(''):'<p class="empty">Todavía no hay partes terminados este mes.</p>';
-  var mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),mios=fi.filter(function(p){return String(p.cerrado).slice(0,7)===mes}),mn=mios.reduce(function(a,p){return a+(+p.minutos||(+p.horas*60)||0)},0),eu=mios.reduce(function(a,p){return a+(+p.mano_obra||0)},0);
-  $('hTot').textContent=dur(mn);$('hEur').textContent=eur(eu)+' (a '+D.tarifa+' € la hora)';
-  $('hDet').innerHTML=mios.length?mios.map(function(p){return'<div class="hr"><span>'+fecha(p.cerrado)+' · '+esc(p.apartamento)+'</span><span>'+dur(+p.minutos||(+p.horas*60))+'</span></div>'}).join(''):'<p class="empty">Aquí verás tus trabajos terminados y sus horas.</p>';
+  $('finEl').innerHTML=fi.length?fi.map(function(p){return'<div class="hr"><span><b>'+esc(p.apartamento)+'</b> · '+esc(p.descripcion)+'<br><span style="color:var(--mt);font-size:12px">'+fecha(p.cerrado)+(+p.coste_materiales?' · piezas '+eur(p.coste_materiales):'')+'</span></span><b>'+dur(+p.minutos||(+p.horas*60))+'</b></div>'}).join(''):'<p class="empty">Todavía no hay partes terminados este mes.</p>';
+  pintaJornada();pintaHoras(fi);
 }
+function hhmm(ts){var d=new Date(ts);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function minJ(j){if(!j||!j.inicio)return 0;var f=j.fin?new Date(j.fin).getTime():Date.now()+OFF;return Math.max(0,(f-new Date(j.inicio).getTime())/60000)}
+// Botón de jornada (Chio 15/11): COMIENZO al preparar herramientas, ACABO al guardarlas.
+function pintaJornada(){var el=$('jorEl');if(!el)return;var j=J&&J.jornada;
+  if(!J){el.innerHTML='';return}
+  if(!j)el.innerHTML='<div class="fc" style="text-align:center"><button class="big go" data-act="jini">🟢 COMIENZO JORNADA</button><p class="loc" style="margin-top:6px">Púlsalo al empezar a preparar las herramientas.</p></div>';
+  else if(!j.fin)el.innerHTML='<div class="fc" style="text-align:center"><div class="clock">🟢 Jornada desde las <b>'+hhmm(j.inicio)+'</b> · llevas <b data-jclock="1">'+dur(minJ(j))+'</b></div><button class="big stop" data-act="jfin">🔴 ACABO JORNADA</button><p class="loc" style="margin-top:6px">Púlsalo cuando hayas guardado todas las herramientas.</p></div>';
+  else el.innerHTML='<div class="fc" style="text-align:center"><div class="clock">✅ Jornada de hoy: <b>'+hhmm(j.inicio)+' – '+hhmm(j.fin)+'</b> ('+dur(minJ(j))+')</div></div>'}
+// Mis horas: jornada de cada día = trabajos por apartamento + Taller. Se paga a J.pago (15 €/h), NO la tarifa del propietario.
+function pintaHoras(fi){var d=new Date(),mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),pago=J&&+J.pago||15,dias={};
+  function dia(k){return dias[k]||(dias[k]={partes:[],j:null})}
+  fi.filter(function(p){return String(p.cerrado).slice(0,7)===mes}).forEach(function(p){var c=new Date(p.cerrado),k=c.getFullYear()+'-'+String(c.getMonth()+1).padStart(2,'0')+'-'+String(c.getDate()).padStart(2,'0');dia(k).partes.push(p)});
+  ((J&&J.mes)||[]).forEach(function(j){dia(String(j.fecha).slice(0,10)).j=j});
+  var tot=0,html=Object.keys(dias).sort().reverse().map(function(k){var x=dias[k],mp=x.partes.reduce(function(a,p){return a+(+p.minutos||(+p.horas*60)||0)},0),mj=minJ(x.j),m=Math.max(mj,mp),taller=x.j?Math.max(0,mj-mp):0;tot+=m;
+    var f=new Date(k+'T12:00:00');
+    return '<div class="hr" style="margin-top:8px"><span><b>'+f.getDate()+' '+MON[f.getMonth()].slice(0,3)+'</b>'+(x.j?' · jornada '+hhmm(x.j.inicio)+(x.j.fin?' – '+hhmm(x.j.fin):' (en curso)'):' · <span style="color:var(--mt)">sin jornada marcada</span>')+'</span><b>'+dur(m)+'</b></div>'+
+      x.partes.map(function(p){return'<div class="hr" style="padding-left:14px"><span>'+esc(p.apartamento)+'</span><span>'+dur(+p.minutos||(+p.horas*60))+'</span></div>'}).join('')+
+      (x.j?'<div class="hr" style="padding-left:14px"><span>🧰 Taller (herramientas y desplazamientos)</span><span>'+dur(taller)+'</span></div>':'')}).join('');
+  $('hTot').textContent=dur(tot);$('hEur').textContent=eur(Math.round(tot/60*pago*100)/100)+' (a '+pago+' € la hora)';
+  $('hDet').innerHTML=html||'<p class="empty">Aquí verás tu jornada de cada día y sus trabajos.</p>'}
 function card(p){
   var e=EST[p.estado]||[p.estado,'pen'];
   var h='<div class="apt '+(p.urgente?'urg':e[1])+'"><div class="apt-h"><span class="apt-n">'+esc(p.apartamento)+'</span><span class="badge '+(p.urgente?'b-urg':'b-'+e[1])+'">'+(p.urgente?'🔴 Urgente':e[0])+'</span></div>';
@@ -246,7 +266,7 @@ function runBanner(){
   var r=D.partes.filter(function(p){return p.inicio&&p.estado!=='terminado'})[0];
   if(!r){$('runEl').innerHTML='';return}
   var m=minAhora(r);
-  $('runEl').innerHTML='<div class="run"><h3>🔧 Estás trabajando en '+esc(r.apartamento).toUpperCase()+'</h3><div class="tm" data-clock="'+r.id+'">'+reloj(m)+'</div><div class="eu" data-eur="'+r.id+'">'+eur(cuesta(r,m))+' de mano de obra</div>'+(largo(r,m)?'<p class="aviso">⚠️ Llevas más tiempo del previsto ('+dur(limite(r))+'). Si ya has terminado, pulsa ⏹ TERMINAR.</p>':'')+'<button class="big stop" data-act="fin" data-id="'+r.id+'">⏹ TERMINAR</button></div>';
+  $('runEl').innerHTML='<div class="run"><h3>🔧 Estás trabajando en '+esc(r.apartamento).toUpperCase()+'</h3><div class="tm" data-clock="'+r.id+'">'+reloj(m)+'</div>'+(largo(r,m)?'<p class="aviso">⚠️ Llevas más tiempo del previsto ('+dur(limite(r))+'). Si ya has terminado, pulsa ⏹ TERMINAR.</p>':'')+'<button class="big stop" data-act="fin" data-id="'+r.id+'">⏹ TERMINAR</button></div>';
 }
 // R-14.14: si el reloj ha contado mucho (más de 1 hora, o más del doble de lo estimado), al terminar se pregunta el tiempo real.
 // R-14.14 (Chio 15/11 01:03): se pregunta en CADA parte, por separado, si el reloj pasa del tiempo estimado (o de 1 hora si no hay estimación).
@@ -263,7 +283,7 @@ function pintaReal(p){var el=$('fReal');if(!el||!p||!MOD)return;var m=minAhora(p
 // Lee las horas y minutos que ha escrito José (null si no ha escrito nada, NaN si es un valor raro).
 function realEscrito(){var h=$('rH'),mi=$('rM');if(!h||!mi)return null;var hv=h.value.trim(),mv=mi.value.trim();if(!hv&&!mv)return null;
   var hh=hv?parseInt(hv,10):0,mm=mv?parseInt(mv,10):0;if(isNaN(hh)||isNaN(mm)||hh<0||mm<0||mm>59||hh>10)return NaN;var t=hh*60+mm;return t>0?t:NaN}
-setInterval(function(){if(!D)return;[].forEach.call(document.querySelectorAll('[data-clock]'),function(e){var p=parte(e.dataset.clock);if(p)e.textContent=reloj(minAhora(p))});
+setInterval(function(){if(!D)return;[].forEach.call(document.querySelectorAll('[data-jclock]'),function(e){if(J&&J.jornada)e.textContent=dur(minJ(J.jornada))});[].forEach.call(document.querySelectorAll('[data-clock]'),function(e){var p=parte(e.dataset.clock);if(p)e.textContent=reloj(minAhora(p))});
   [].forEach.call(document.querySelectorAll('[data-eur]'),function(e){var p=parte(e.dataset.eur);if(p)e.textContent=eur(cuesta(p,minAhora(p)))+' de mano de obra'});
   var fm=$('fMin');if(fm&&MOD&&MOD.id){var p=parte(MOD.id);if(p)pintaFin(p)}},1000);
 // Reduce la foto en el móvil (máx. 1280 px, JPEG) antes de subirla: ocupa poco y sube rápido con mala cobertura.
@@ -357,7 +377,7 @@ function weekView(ab){
   return'<h3 class="dh2">Semana</h3><p class="loc">Cuándo se puede entrar en cada apartamento con arreglos. Entre paréntesis, cuántos arreglos tiene.</p><div class="wk"><table><thead><tr><th>Apartamento</th>'+days.map(function(d){return'<th>'+corto(d)+'</th>'}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function pintaFin(p){var el=$('fSum');if(!el||!p)return;var m=minAhora(p),mo=cuesta(p,m),mt=(p.mats||[]).reduce(function(a,x){return a+(+x.precio||0)},0);
-  el.innerHTML='<div class="hr"><span>⏱️ Tiempo trabajado</span><b id="fMin">'+dur(m)+'</b></div><div class="hr"><span>Mano de obra ('+tarifa(p)+' € la hora)</span><b>'+eur(mo)+'</b></div><div class="hr"><span>Piezas</span><b>'+eur(mt)+'</b></div><div class="hr"><span>TOTAL</span><span class="tt">'+eur(mo+mt)+'</span></div>'+(p.inicio?'':(m?'':'<p class="loc">No se ha pulsado EMPEZAR: el tiempo es 0. Si has trabajado, avisa a Recepción.</p>'))}
+  el.innerHTML='<div class="hr"><span>⏱️ Tiempo trabajado</span><b id="fMin">'+dur(m)+'</b></div><div class="hr"><span>Piezas</span><b>'+eur(mt)+'</b></div>'+(p.inicio?'':(m?'':'<p class="loc">No se ha pulsado EMPEZAR: el tiempo es 0. Si has trabajado, avisa a Recepción.</p>'))}
 function pintaMats(p){var el=$('fMat');if(!el||!p)return;var ms=p.mats||[];el.innerHTML=ms.length?ms.map(function(x){return'<li><span>'+esc(x.concepto)+' · <b>'+eur(x.precio)+'</b></span><button data-act="matdel" data-mid="'+x.id+'">✖ Quitar</button></li>'}).join(''):'<li style="color:var(--mt);font-size:14px">Ninguna pieza todavía.</li>';pintaFin(p)}
 function modal(html,id){MOD={id:id||null};$('modal').hidden=false;$('modal').innerHTML='<div class="modal-bg"><div class="modal">'+html+'</div></div>'}
 function closeModal(){MOD=null;$('modal').hidden=true;$('modal').innerHTML=''}
@@ -365,6 +385,10 @@ setInterval(function(){if(!MOD&&!BUSY&&document.visibilityState==='visible')load
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&!MOD)load(true)});
 document.addEventListener('click',async function(ev){
   var t=ev.target.closest('[data-tab],[data-act],[data-fil],[data-vis]');if(!t)return;
+  if(t.dataset.act==='jini'){modal('<h3>🟢 Comienzo de jornada</h3><p style="font-size:16px;text-align:center;margin-bottom:14px">Tu jornada empieza a contar ahora (preparar herramientas, moverte y trabajar).</p><button class="big go" data-act="jiniok">✅ SÍ, EMPIEZO</button><button class="blink" data-act="close" style="font-size:15px">No, volver</button>');return}
+  if(t.dataset.act==='jfin'){var run=D.partes.filter(function(p){return p.inicio})[0];modal('<h3>🔴 Acabar la jornada</h3>'+(run?'<p class="aviso">⚠️ Tienes el reloj de '+esc(run.apartamento)+' en marcha. Termínalo antes.</p><button class="blink" data-act="close" style="font-size:15px">Volver</button>':'<p style="font-size:16px;text-align:center;margin-bottom:14px">¿Ya has guardado todas las herramientas? Tu jornada de hoy se cierra ahora.</p><button class="big stop" data-act="jfinok">✅ SÍ, ACABO</button><button class="blink" data-act="close" style="font-size:15px">No, sigo</button>'));return}
+  if(t.dataset.act==='jiniok'){closeModal();await act('jornada',{p_accion:'empezar'},'🟢 Jornada empezada');return}
+  if(t.dataset.act==='jfinok'){closeModal();await act('jornada',{p_accion:'terminar'},'🔴 Jornada terminada. ¡Hasta mañana!');return}
   if(t.dataset.fil){FIL=t.dataset.fil;render();return}
   if(t.dataset.vis){VIS=t.dataset.vis;try{localStorage.setItem('mant-vis',VIS)}catch(e){}render();return}
   if(t.dataset.tab){['tPar','tFin','tHrs'].forEach(function(id){$(id).hidden=id!==t.dataset.tab});[].forEach.call(document.querySelectorAll('.nb'),function(b){b.classList.toggle('act',b===t)});window.scrollTo(0,0);return}
@@ -395,7 +419,7 @@ document.addEventListener('click',async function(ev){
     if(BUSY)return;BUSY=true;$('sync').textContent='Guardando…';
     try{if(typeof real==='number'&&Math.round(real)!==Math.round(minAhora(p)))await rpc('parte_tiempo_real',{p_id:+id,p_minutos:real});
       var r=await rpc('parte_terminar',{p_id:+id,p_nota:ff||null});BUSY=false;await load(true);
-      modal('<h3>✅ ¡Terminado! Gracias</h3><div class="sum"><div class="hr"><span>⏱️ Tiempo</span><b>'+dur(+r.minutos)+'</b></div><div class="hr"><span>Mano de obra</span><b>'+eur(r.mano_obra)+'</b></div><div class="hr"><span>Piezas</span><b>'+eur(r.materiales)+'</b></div><div class="hr"><span>TOTAL</span><span class="tt">'+eur(r.total)+'</span></div></div><p class="loc" style="text-align:center;margin-bottom:10px">Queda apuntado en '+esc(p.apartamento)+'.</p><button class="big go" data-act="close">OK</button>')}
+      modal('<h3>✅ ¡Terminado! Gracias</h3><div class="sum"><div class="hr"><span>⏱️ Tiempo</span><b>'+dur(+r.minutos)+'</b></div><div class="hr"><span>Piezas</span><b>'+eur(r.materiales)+'</b></div></div><p class="loc" style="text-align:center;margin-bottom:10px">Queda apuntado en '+esc(p.apartamento)+'.</p><button class="big go" data-act="close">OK</button>')}
     catch(e){BUSY=false;$('sync').textContent='Sin guardar';toast(e.codigo==='sin_conexion'?'No se ha guardado: no hay conexión. Vuelve a pulsar TERMINAR.':'No se ha podido guardar. Avisa a Recepción.')}}
   else if(a==='foto'){FOTO_ID=+id;$('fotoIn').value='';$('fotoIn').click()}
   else if(a==='verfotos'){modal('<h3>🖼️ Fotos · '+esc(p.apartamento)+'</h3><p class="loc">Cargando…</p><button class="blink" data-act="close">Cerrar</button>');
