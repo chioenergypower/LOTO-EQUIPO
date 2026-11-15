@@ -76,7 +76,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .aviso{background:var(--wnl);color:var(--wn);border-radius:var(--rs);padding:10px;font-size:15px;font-weight:600;margin:8px 0}
 .real{background:var(--wnl);border:2px solid var(--wn);border-radius:var(--r);padding:12px;margin:10px 0 14px}
 .real p{font-size:16px;line-height:1.45;margin-bottom:10px;color:var(--fg)}
-.real .ops{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.real .ops{display:grid;grid-template-columns:1fr;gap:8px}
+.real .hm{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.real .hm label{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:15px;font-weight:600}
+.real .hm input{font-size:28px;font-weight:700;text-align:center;padding:10px;width:100%}
 .real .ops button{font-size:17px;font-weight:700;padding:14px 6px;border-radius:var(--rs);border:2px solid var(--bd);background:var(--card);color:var(--fg)}
 .real .ops button:last-child{grid-column:1/-1}
 .real .ops button.on{background:var(--ok);border-color:var(--ok);color:#fff}
@@ -251,10 +254,15 @@ function limite(p){return +p.estimado>0?+p.estimado:60}
 function largo(p,m){return m>limite(p)}
 function pintaReal(p){var el=$('fReal');if(!el||!p||!MOD)return;var m=minAhora(p);
   if(!largo(p,m)){el.innerHTML='';MOD.real=null;return}
-  var ops=[5,10,15,20,30,45,60,90,120],sel=MOD.real;
-  el.innerHTML='<div class="real"><p><b>⚠️ '+esc(p.apartamento).toUpperCase()+': el reloj ha contado '+dur(m)+'.</b><br>Para este trabajo calculábamos unos '+dur(limite(p))+'. ¿Cuánto has trabajado de verdad?</p><div class="ops">'+
-    ops.map(function(x){return'<button data-act="real" data-min="'+x+'" class="'+(sel===x?'on':'')+'">'+dur(x)+'</button>'}).join('')+
-    '<button data-act="real" data-min="ok" class="'+(sel==='ok'?'on':'')+'">✅ Es correcto ('+dur(m)+')</button></div></div>'}
+  // Chio 15/11 01:09: José escribe él mismo las horas y los minutos (ej. 0 h 29 min, 1 h 34 min).
+  var sel=MOD.real;
+  el.innerHTML='<div class="real"><p><b>⚠️ '+esc(p.apartamento).toUpperCase()+': el reloj ha contado '+dur(m)+'.</b><br>Para este trabajo calculábamos unos '+dur(limite(p))+'. ¿Cuánto has trabajado de verdad?</p>'+
+    '<div class="hm"><label><input id="rH" class="fi" type="number" inputmode="numeric" min="0" max="10" placeholder="0"><span>horas</span></label>'+
+    '<label><input id="rM" class="fi" type="number" inputmode="numeric" min="0" max="59" placeholder="0"><span>minutos</span></label></div>'+
+    '<div class="ops"><button data-act="real" data-min="ok" class="'+(sel==='ok'?'on':'')+'">✅ Es correcto ('+dur(m)+')</button></div></div>'}
+// Lee las horas y minutos que ha escrito José (null si no ha escrito nada, NaN si es un valor raro).
+function realEscrito(){var h=$('rH'),mi=$('rM');if(!h||!mi)return null;var hv=h.value.trim(),mv=mi.value.trim();if(!hv&&!mv)return null;
+  var hh=hv?parseInt(hv,10):0,mm=mv?parseInt(mv,10):0;if(isNaN(hh)||isNaN(mm)||hh<0||mm<0||mm>59||hh>10)return NaN;var t=hh*60+mm;return t>0?t:NaN}
 setInterval(function(){if(!D)return;[].forEach.call(document.querySelectorAll('[data-clock]'),function(e){var p=parte(e.dataset.clock);if(p)e.textContent=reloj(minAhora(p))});
   [].forEach.call(document.querySelectorAll('[data-eur]'),function(e){var p=parte(e.dataset.eur);if(p)e.textContent=eur(cuesta(p,minAhora(p)))+' de mano de obra'});
   var fm=$('fMin');if(fm&&MOD&&MOD.id){var p=parte(MOD.id);if(p)pintaFin(p)}},1000);
@@ -381,7 +389,8 @@ document.addEventListener('click',async function(ev){
     '<p style="font-size:13px;color:var(--mt);margin-bottom:10px">Guarda el tique de la compra y mándale una foto a Recepción por WhatsApp.</p>'+
     '<button class="big go" data-act="finok" data-id="'+id+'">✅ GUARDAR Y TERMINAR</button><button class="blink" data-act="close" style="font-size:15px">Volver (el reloj sigue)</button>',+id);pintaFin(p);pintaMats(p);pintaReal(p)}
   else if(a==='finok'){var co2=$('mMc').value.trim();if(co2||$('mMp').value.trim()){toast('Tienes una pieza sin añadir: pulsa ➕ Añadir pieza o borra lo escrito');return}
-    var real=MOD&&MOD.real;if(largo(p,minAhora(p))&&!real){toast('Dinos cuánto has trabajado de verdad (arriba) ⬆️');var rb=$('fReal');if(rb)rb.scrollIntoView({behavior:'smooth',block:'center'});return}
+    var esc2=realEscrito();if(typeof esc2==='number'&&isNaN(esc2)){toast('Revisa el tiempo: horas de 0 a 10 y minutos de 0 a 59');return}
+    var real=esc2||(MOD&&MOD.real);if(largo(p,minAhora(p))&&!real){toast('Escribe cuánto has trabajado de verdad (arriba) ⬆️');var rb=$('fReal');if(rb)rb.scrollIntoView({behavior:'smooth',block:'center'});return}
     var ff=$('mF').value.trim();closeModal();
     if(BUSY)return;BUSY=true;$('sync').textContent='Guardando…';
     try{if(typeof real==='number'&&Math.round(real)!==Math.round(minAhora(p)))await rpc('parte_tiempo_real',{p_id:+id,p_minutos:real});
