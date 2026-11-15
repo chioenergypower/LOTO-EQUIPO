@@ -143,7 +143,7 @@ label.lb{display:block;font-size:13px;font-weight:700;color:var(--fg);margin:4px
     <div id="jorEl"></div>
     <div id="runEl"></div>
     <details class="guia" id="guiaEl"><summary>📖 Cómo se usa (pulsa aquí)</summary><ol>
-      <li><b>Al empezar el día</b> (cuando te pones a preparar las herramientas) pulsa <b>🟢 COMIENZO JORNADA</b>. <b>Al terminar</b> (con todo guardado) pulsa <b>🔴 ACABO JORNADA</b>. Lo que no es de ningún apartamento cuenta como <b>Taller</b>.</li>
+      <li><b>Al empezar el día</b> (cuando te pones a preparar las herramientas) pulsa <b>🟢 COMIENZO JORNADA</b>. <b>Al terminar</b> (con todo guardado) pulsa <b>🔴 ACABO JORNADA</b>. Si no lo pulsas, no pasa nada: se cuentan solos 15 min para preparar y 15 min para guardar las herramientas (<b>Taller</b>).</li>
       <li><b>Al llegar al apartamento</b>, busca su arreglo y pulsa <b>▶ EMPEZAR</b>. El reloj empieza a contar solo.</li>
       <li>Haz el trabajo tranquilo. Arriba verás el tiempo que llevas.</li>
       <li><b>Al acabar</b>, pulsa <b>⏹ TERMINAR</b>.</li>
@@ -219,7 +219,7 @@ function minJ(j){if(!j||!j.inicio)return 0;var f=j.fin?new Date(j.fin).getTime()
 // Botón de jornada (Chio 15/11): COMIENZO al preparar herramientas, ACABO al guardarlas.
 function pintaJornada(){var el=$('jorEl');if(!el)return;var j=J&&J.jornada;
   if(!J){el.innerHTML='';return}
-  if(!j)el.innerHTML='<div class="fc" style="text-align:center"><button class="big go" data-act="jini">🟢 COMIENZO JORNADA</button><p class="loc" style="margin-top:6px">Púlsalo al empezar a preparar las herramientas.</p></div>';
+  if(!j)el.innerHTML='<div class="fc" style="text-align:center"><button class="big go" data-act="jini">🟢 COMIENZO JORNADA</button><p class="loc" style="margin-top:6px">No es obligatorio: si no lo pulsas, se cuentan solos 15 min de preparar y 15 min de guardar herramientas.</p></div>';
   else if(!j.fin)el.innerHTML='<div class="fc" style="text-align:center"><div class="clock">🟢 Jornada desde las <b>'+hhmm(j.inicio)+'</b> · llevas <b data-jclock="1">'+dur(minJ(j))+'</b></div><button class="big stop" data-act="jfin">🔴 ACABO JORNADA</button><p class="loc" style="margin-top:6px">Púlsalo cuando hayas guardado todas las herramientas.</p></div>';
   else el.innerHTML='<div class="fc" style="text-align:center"><div class="clock">✅ Jornada de hoy: <b>'+hhmm(j.inicio)+' – '+hhmm(j.fin)+'</b> ('+dur(minJ(j))+')</div></div>'}
 // Mis horas: jornada de cada día = trabajos por apartamento + Taller. Se paga a J.pago (15 €/h), NO la tarifa del propietario.
@@ -227,11 +227,11 @@ function pintaHoras(fi){var d=new Date(),mes=d.getFullYear()+'-'+String(d.getMon
   function dia(k){return dias[k]||(dias[k]={partes:[],j:null})}
   fi.filter(function(p){return String(p.cerrado).slice(0,7)===mes}).forEach(function(p){var c=new Date(p.cerrado),k=c.getFullYear()+'-'+String(c.getMonth()+1).padStart(2,'0')+'-'+String(c.getDate()).padStart(2,'0');dia(k).partes.push(p)});
   ((J&&J.mes)||[]).forEach(function(j){dia(String(j.fecha).slice(0,10)).j=j});
-  var tot=0,html=Object.keys(dias).sort().reverse().map(function(k){var x=dias[k],mp=x.partes.reduce(function(a,p){return a+(+p.minutos||(+p.horas*60)||0)},0),mj=minJ(x.j),m=Math.max(mj,mp),taller=x.j?Math.max(0,mj-mp):0;tot+=m;
+  var TALLER_AUTO=30,tot=0,html=Object.keys(dias).sort().reverse().map(function(k){var x=dias[k],mp=x.partes.reduce(function(a,p){return a+(+p.minutos||(+p.horas*60)||0)},0),ult=x.partes.reduce(function(a,p){return Math.max(a,new Date(p.cerrado).getTime())},0),abierta=x.j&&!x.j.fin&&k!==J.hoy;if(abierta&&ult)x.j={inicio:x.j.inicio,fin:new Date(ult+15*60000).toISOString(),auto:1};var mj=minJ(x.j),taller=x.j?Math.max(0,mj-mp):(mp?TALLER_AUTO:0),m=mp+taller;tot+=m;
     var f=new Date(k+'T12:00:00');
-    return '<div class="hr" style="margin-top:8px"><span><b>'+f.getDate()+' '+MON[f.getMonth()].slice(0,3)+'</b>'+(x.j?' · jornada '+hhmm(x.j.inicio)+(x.j.fin?' – '+hhmm(x.j.fin):' (en curso)'):' · <span style="color:var(--mt)">sin jornada marcada</span>')+'</span><b>'+dur(m)+'</b></div>'+
+    return '<div class="hr" style="margin-top:8px"><span><b>'+f.getDate()+' '+MON[f.getMonth()].slice(0,3)+'</b>'+(x.j?' · jornada '+hhmm(x.j.inicio)+(x.j.fin?' – '+hhmm(x.j.fin)+(x.j.auto?' (cerrada sola)':''):' (en curso)'):'')+'</span><b>'+dur(m)+'</b></div>'+
       x.partes.map(function(p){return'<div class="hr" style="padding-left:14px"><span>'+esc(p.apartamento)+'</span><span>'+dur(+p.minutos||(+p.horas*60))+'</span></div>'}).join('')+
-      (x.j?'<div class="hr" style="padding-left:14px"><span>🧰 Taller (herramientas y desplazamientos)</span><span>'+dur(taller)+'</span></div>':'')}).join('');
+      (taller?'<div class="hr" style="padding-left:14px"><span>🧰 Taller (herramientas y desplazamientos)'+(x.j?'':' · automático 15 + 15 min')+'</span><span>'+dur(taller)+'</span></div>':'')}).join('');
   $('hTot').textContent=dur(tot);$('hEur').textContent=eur(Math.round(tot/60*pago*100)/100)+' (a '+pago+' € la hora)';
   $('hDet').innerHTML=html||'<p class="empty">Aquí verás tu jornada de cada día y sus trabajos.</p>'}
 function card(p){
