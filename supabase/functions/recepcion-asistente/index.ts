@@ -70,7 +70,7 @@ async function runTool(name: string, i: any, k: string, propuestas: any[]) {
     case "pedir_factura": {
       const id = await rpc("rec_nota", { p_k: k, p_texto: `🧾 FACTURA para ${i.cliente} · ${i.reserva}${i.datos_fiscales ? "\nDatos: " + i.datos_fiscales : ""}${i.notas ? "\n" + i.notas : ""}`, p_apartamento: null, p_para: "Claude", p_importante: true });
       await rest(`rec_notas?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tipo: "factura" }) });
-      return { ok: true, aviso: "Tarea creada: Claude hará la factura en Holded en su próxima revisión (máx. 15 min)." };
+      return { ok: true, aviso: "Tarea creada: Claude se pone con la factura en 1-2 minutos." };
     }
     case "consultar_a_chio": {
       const id = await rpc("rec_nota", { p_k: k, p_texto: `❓ ${i.pregunta}`, p_apartamento: i.apartamento ?? null, p_para: "Chio", p_importante: true });
@@ -117,7 +117,7 @@ async function runTool(name: string, i: any, k: string, propuestas: any[]) {
     case "avisar_equipo": {
       const id = await rpc("rec_nota", { p_k: k, p_texto: `📲 WhatsApp para ${i.para}: ${i.mensaje}`, p_apartamento: i.apartamento ?? null, p_para: i.para === "Sete" || i.para === "Santi" ? i.para : "Claude", p_importante: true });
       await rest(`rec_notas?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tipo: "whatsapp" }) });
-      return { ok: true, aviso: `Mensaje apuntado. Claude se lo envía por WhatsApp a ${i.para} en su próxima revisión (máx. 15 min) y lo marcará como enviado en Traspaso.` };
+      return { ok: true, aviso: `Mensaje apuntado. Claude se lo envía por WhatsApp a ${i.para} en 1-2 minutos y lo marcará como enviado en Traspaso.` };
     }
     case "nota_traspaso": {
       const n = await rpc("rec_nota", { p_k: k, p_texto: i.texto, p_apartamento: i.apartamento ?? null, p_para: null, p_importante: !!i.importante });
@@ -139,14 +139,14 @@ Reglas que no se rompen:
 - Check-in 17:00, check-out 11:00. Entrada antes / salida tarde sin coste según limpieza del día.
 - Cancelaciones fuera de 30 días: primero NO. Reembolsos, compensaciones y excepciones: los decide el recepcionista.
 - Recomendar siempre cadenas; nosotros no salimos a ayudar en carretera. «Cerca de la plaza» = solo Atlas.
-- Nunca des códigos de cajetín, wifi, parking, teléfonos del equipo, IBAN ni nada de propietarios.
+- Nunca des códigos de cajetín, parking, teléfonos del equipo, IBAN ni nada de propietarios. Las claves wifi SÍ se pueden dar (Chio 26/11).
 - Disponibilidad: usa SIEMPRE la herramienta disponibilidad para las fechas exactas que te pidan, justo antes de responder (nunca de memoria ni de una respuesta anterior). Di siempre de hace cuántos minutos son los datos de ICNEA; si son de hace más de 20 min, avisa de que lo confirme en el calendario de ICNEA antes de dar el piso al cliente.
 - Actúas como Chio, la responsable: todo lo que ella ha enseñado está en buscar_conocimiento y buscar_documentos. Ante un «¿cómo hago…?» busca SIEMPRE en los dos antes de responder y da los pasos numerados. Las reglas más recientes (fecha más nueva) mandan sobre las antiguas.
 - Pagos de reservas directas: SIEMPRE a la cuenta de Santander de Loto Nevada SL, plazo 72 h; al recibir la captura se registra en ICNEA (Transacciones → Añadir pago, concepto PAGO SANTANDER). Sin pago a las 72 h y sin respuesta tras llamar: el recepcionista cancela y abre fechas.
 - Si te corrigen o te enseñan algo nuevo, confírmalo en una frase y guárdalo con guardar_conocimiento. Así aprendemos todos.
 - Si no lo sabes, NO inventes: pregunta al recepcionista, y si tampoco lo sabe, usa consultar_a_chio.
 - Si piden hablar con Chio o con alguien del equipo, o pasarle un recado («dile a Chio…», «dile a Yudi…»), usa avisar_equipo con el mensaje ya redactado y muestra en tu respuesta el texto exacto que se va a enviar y a quién. No preguntes si quiere añadir algo: envíalo con lo que haya dicho.
-- Wifi / internet: busca SIEMPRE en buscar_conocimiento con «wifi». Muchos pisos reciben el wifi del router de otro piso (p. ej. Sol ← Luna); explica de qué piso viene el router y que, si hay que tocarlo, hay que coordinarlo con el cliente de ese piso. Nunca des claves wifi: están en las instrucciones de llegada.
+- Wifi / internet: busca SIEMPRE en buscar_conocimiento con «wifi». Muchos pisos reciben el wifi del router de otro piso (p. ej. Sol ← Luna); explica de qué piso viene el router y que, si hay que tocarlo, hay que coordinarlo con el cliente de ese piso. Las claves wifi sí se pueden dar; si no las tienes registradas, di que están en las instrucciones de llegada del piso en ICNEA o pídeselas a Claude con avisar_equipo.
 - Si piden una factura para un cliente, recoge cliente, reserva y datos fiscales que tengan y usa pedir_factura.
 - Cuando el recepcionista diga que ha cerrado con el cliente, usa proponer_reserva con todos los datos que tengas; la reserva se crea al pulsar el botón.`;
 
