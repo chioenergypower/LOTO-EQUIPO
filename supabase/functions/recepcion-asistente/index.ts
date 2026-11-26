@@ -41,6 +41,7 @@ const tools = [
   { name: "guardar_conocimiento", description: "Guarda en la base lo que el recepcionista enseña o corrige («esto no es así, es de esta manera»). Úsalo SIEMPRE que te corrijan o te den un dato nuevo, después de confirmarlo con él.", input_schema: { type: "object", properties: { tema: { type: "string" }, pregunta: { type: "string", description: "situación o pregunta tipo" }, respuesta_correcta: { type: "string" }, apartamento: { type: "string" } }, required: ["tema", "respuesta_correcta"] } },
   { name: "pedir_factura", description: "El recepcionista pide una factura para un cliente. Crea la tarea para que Claude (recepción automática) la haga en Holded y se la envíe al cliente.", input_schema: { type: "object", properties: { cliente: { type: "string" }, reserva: { type: "string", description: "nº de reserva ICNEA o apartamento y fechas" }, datos_fiscales: { type: "string", description: "nombre/razón social, NIF/CIF, dirección, email (si los tiene)" }, notas: { type: "string" } }, required: ["cliente", "reserva"] } },
   { name: "consultar_a_chio", description: "Cuando no sabes algo, o el recepcionista tampoco lo sabe, deja la pregunta apuntada para Chio y Claude.", input_schema: { type: "object", properties: { pregunta: { type: "string" }, apartamento: { type: "string" } }, required: ["pregunta"] } },
+  { name: "avisar_equipo", description: "Cuando el recepcionista pide hablar con Chio o con alguien del equipo (Yudi, Julieta, José Matador, Sete, Santi), o pide pasarle un recado: deja el mensaje para que Claude se lo mande por WhatsApp. Escribe el mensaje ya redactado, claro y completo, como lo leerá esa persona.", input_schema: { type: "object", properties: { para: { type: "string", enum: ["Chio", "Yudi", "Julieta", "José Matador", "Sete", "Santi"] }, mensaje: { type: "string" }, apartamento: { type: "string" }, urgente: { type: "boolean" } }, required: ["para", "mensaje"] } },
   { name: "nota_traspaso", description: "Deja una nota para el otro recepcionista (traspaso de turno).", input_schema: { type: "object", properties: { texto: { type: "string" }, apartamento: { type: "string" }, importante: { type: "boolean" } }, required: ["texto"] } },
 ];
 
@@ -109,6 +110,11 @@ async function runTool(name: string, i: any, k: string, propuestas: any[]) {
       const n = await rpc("rec_parte", { p_k: k, p_apartamento: id, p_descripcion: i.descripcion, p_urgente: !!i.urgente });
       return { ok: true, parte: n };
     }
+    case "avisar_equipo": {
+      const id = await rpc("rec_nota", { p_k: k, p_texto: `📲 WhatsApp para ${i.para}: ${i.mensaje}`, p_apartamento: i.apartamento ?? null, p_para: i.para === "Sete" || i.para === "Santi" ? i.para : "Claude", p_importante: true });
+      await rest(`rec_notas?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tipo: "whatsapp" }) });
+      return { ok: true, aviso: `Mensaje apuntado. Claude se lo envía por WhatsApp a ${i.para} en su próxima revisión (máx. 15 min) y lo marcará como enviado en Traspaso.` };
+    }
     case "nota_traspaso": {
       const n = await rpc("rec_nota", { p_k: k, p_texto: i.texto, p_apartamento: i.apartamento ?? null, p_para: null, p_importante: !!i.importante });
       return { ok: true, nota: n };
@@ -135,6 +141,8 @@ Reglas que no se rompen:
 - Pagos de reservas directas: SIEMPRE a la cuenta de Santander de Loto Nevada SL, plazo 72 h; al recibir la captura se registra en ICNEA (Transacciones → Añadir pago, concepto PAGO SANTANDER). Sin pago a las 72 h y sin respuesta tras llamar: el recepcionista cancela y abre fechas.
 - Si te corrigen o te enseñan algo nuevo, confírmalo en una frase y guárdalo con guardar_conocimiento. Así aprendemos todos.
 - Si no lo sabes, NO inventes: pregunta al recepcionista, y si tampoco lo sabe, usa consultar_a_chio.
+- Si piden hablar con Chio o con alguien del equipo, o pasarle un recado («dile a Chio…», «dile a Yudi…»), usa avisar_equipo con el mensaje ya redactado y muestra en tu respuesta el texto exacto que se va a enviar y a quién. No preguntes si quiere añadir algo: envíalo con lo que haya dicho.
+- Wifi / internet: busca SIEMPRE en buscar_conocimiento con «wifi». Muchos pisos reciben el wifi del router de otro piso (p. ej. Sol ← Luna); explica de qué piso viene el router y que, si hay que tocarlo, hay que coordinarlo con el cliente de ese piso. Nunca des claves wifi: están en las instrucciones de llegada.
 - Si piden una factura para un cliente, recoge cliente, reserva y datos fiscales que tengan y usa pedir_factura.
 - Cuando el recepcionista diga que ha cerrado con el cliente, usa proponer_reserva con todos los datos que tengas; la reserva se crea al pulsar el botón.`;
 
