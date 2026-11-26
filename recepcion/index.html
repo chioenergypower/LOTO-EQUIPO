@@ -226,7 +226,7 @@ async function preguntar(t){
     var r=await fetch(LOTO.url+"/functions/v1/recepcion-asistente",{method:"POST",headers:{"Content-Type":"application/json",apikey:LOTO.anon,Authorization:"Bearer "+LOTO.anon},body:JSON.stringify({k:lotoClave(),pregunta:t,historial:HIST})});
     var j=await r.json();
     if(j.error){w.textContent=ERR[j.error]||("Error: "+j.error);return}
-    w.textContent=j.respuesta||"(sin respuesta)"; HIST.push({pregunta:t,respuesta:j.respuesta}); HIST=HIST.slice(-6);
+    w.innerHTML=esc(j.respuesta||"(sin respuesta)").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/^#+ ?/gm,""); HIST.push({pregunta:t,respuesta:j.respuesta}); HIST=HIST.slice(-6);
     (j.propuestas||[]).forEach(function(p){var c=document.createElement("div");c.className="m a";c.style.maxWidth="100%";c.innerHTML="<b>📝 Revisa y confirma la reserva</b>"+formReserva(p);log.appendChild(c);log.scrollTop=1e9});
   }catch(e){w.textContent="Sin conexión con el asistente. Reintenta."}
 }
