@@ -77,6 +77,7 @@ a{color:var(--acc)}
 <header><h1>🛎️ Recepción Loto</h1><div class="sub" id="sub">Cargando…</div></header>
 <nav id="tabs">
   <button data-t="hoy" class="on">Hoy</button>
+  <button data-t="activar">⚡ Activar pisos</button>
   <button data-t="manana">Mañana</button>
   <button data-t="traspaso">Traspaso</button>
   <button data-t="reservas">Reservas</button>
@@ -115,7 +116,7 @@ async function cargar(auto){
   catch(e){ document.getElementById("app").innerHTML='<div class="alert b">'+esc(msgErr(e))+'</div>'; return; }
   var vieja=D.ultima_sync&&(Date.now()-new Date(D.ultima_sync))>864e5;
   document.getElementById("sub").textContent="Hola "+D.yo.nombre+" · "+fmt(D.fecha)+" · ICNEA sincronizado "+(D.ultima_sync?fmt(D.ultima_sync)+" "+hora(D.ultima_sync):"—")+(vieja?" ⚠️":"");
-  if(auto){var ae=document.activeElement; if(tab==="reservas"||tab==="traspaso"||tab==="equipo"||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)))return;}
+  if(auto){var ae=document.activeElement; if(tab==="reservas"||tab==="traspaso"||tab==="equipo"||tab==="activar"||(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)))return;}
   pintar();
 }
 function pisoHTML(p){
@@ -146,6 +147,7 @@ function pintar(){
     h+='<h2>🏢 Estado de todos los alojamientos</h2>';
     Object.keys(ed).forEach(function(k){h+='<div class="mut" style="margin:10px 0 4px;font-weight:600">'+esc(k)+'</div><div class="grid">'+ed[k].map(pisoHTML).join("")+'</div>'});
   }
+  if(tab==="activar"){ h+='<div id="act"><div class="mut">Cargando…</div></div>'; a.innerHTML=h; cargarActivar(); return; }
   if(tab==="manana"){
     h+='<h2>🟢 Llegan mañana</h2>'+(D.llegadas_manana.length?D.llegadas_manana.map(function(x){return '<div class="card"><b>'+esc(x.apartamento)+'</b> · '+x.noches+' noche(s) · hora: '+(x.hora?esc(x.hora):'<span style="color:var(--warn)">⏳ Claude se la está preguntando al cliente</span>')+'</div>'}).join(""):'<div class="mut">Nadie</div>');
     h+='<h2>🟠 Salen mañana</h2>'+(D.salidas_manana.length?'<div class="card">'+D.salidas_manana.map(function(x){return esc(x.apartamento)}).join(" · ")+'</div>':'<div class="mut">Nadie</div>');
@@ -224,6 +226,38 @@ async function responder(id){var t=document.getElementById("r"+id).value;if(!t.t
 async function notaHecha(id){try{await rpc("rec_nota_hecha",{p_id:id});cargar()}catch(e){}}
 async function nuevoParte(){var t=document.getElementById("pd").value.trim();if(!t)return;try{var n=await rpc("rec_parte",{p_apartamento:document.getElementById("pa").value,p_descripcion:t,p_urgente:document.getElementById("pu").checked});alert2(document.getElementById("app"),"✔ Parte #"+n+" creado y asignado a José.");cargar()}catch(e){alert2(document.getElementById("app"),msgErr(e))}}
 async function nuevoMensaje(){var t=document.getElementById("mt").value.trim();if(!t)return;try{await rpc("rec_mensaje",{p_para:"limpieza",p_apartamento:document.getElementById("ma").value,p_texto:t});cargar()}catch(e){alert2(document.getElementById("app"),msgErr(e))}}
+var REPO=[['Cafetera',20],['Secador',15],['Plancha',20],['Hervidor',12],['Tostadora',15],['Sartén',10],['Olla',12],['Vasos x6',5],['Cubiertos',8],['Platos',10],['Toalla baño',6],['Sábana',8],['Funda nórdica',15],['Almohada',5],['Bombilla',3],['Mando TV',10]];
+function reducir(file){return new Promise(function(ok,ko){var fr=new FileReader();fr.onerror=function(){ko(new Error('no_se_pudo_leer'))};fr.onload=function(){var im=new Image();im.onerror=function(){ko(new Error('foto_no_valida'))};im.onload=function(){var m=1280,w=im.naturalWidth,h=im.naturalHeight,k=Math.min(1,m/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',0.72))};im.src=fr.result};fr.readAsDataURL(file)})}
+async function cargarActivar(){
+  var box=document.getElementById("act"); if(!box)return;
+  try{ var A=await rpc("rec_activar_lista",{p_fecha:null}); }catch(e){ box.innerHTML='<div class="alert b">'+esc(msgErr(e))+'</div>'; return; }
+  var pend=A.pisos.filter(function(x){return !x.activado}).length;
+  var h='<div class="card"><b>⚡ Pisos para activar hoy ('+pend+' pendientes de '+A.pisos.length+')</b><div class="mut">Al llegar al piso: enciende calefacción y agua caliente, revisa que esté todo y pulsa ✅ Activado. Si pones algo nuevo (cafetera, secador…) apúntalo en 🔄 Reposición: se descuenta al propietario el mes siguiente. Si algo está roto, 🔧 Incidencia con foto.</div></div>';
+  if(!A.pisos.length) h+='<div class="mut">Hoy no hay pisos para activar.</div>';
+  A.pisos.forEach(function(x,i){
+    h+='<div class="card" style="'+(x.activado?'opacity:.6':'border-left:5px solid var(--acc)')+'"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:6px"><b style="font-size:17px">'+esc(x.apartamento)+'</b><span class="tag '+(x.activado?'s-limpio':'s-limpiando')+'">'+(x.activado?'✅ Activado por '+esc(x.activado_por||''):'⏳ Por activar')+'</span></div>'+
+      '<div class="mut">'+(x.hora_entrada?'🕐 Entran a las '+esc(x.hora_entrada):'🕐 Hora de entrada sin confirmar')+' · '+(x.limpio?'🧹 Limpio':'🧹 Limpieza sin terminar')+'</div>'+
+      ((x.peticiones&&x.peticiones.length)?'<div>📝 '+esc([].concat(x.peticiones).map(function(p){return typeof p==="string"?p:(p.texto||p.nombre||JSON.stringify(p))}).join(" · "))+'</div>':'')+
+      (x.reposiciones.length?'<div class="mut">🔄 Puesto hoy: '+x.reposiciones.map(function(r){return esc(r.objeto)+' ('+r.precio+' €)'}).join(", ")+'</div>':'')+
+      (x.partes.length?'<div class="mut">🔧 Partes abiertos: '+x.partes.map(function(p){return (p.urgente?'🔴 ':'')+esc(p.descripcion)}).join(" · ")+'</div>':'')+
+      '<div class="acc">'+(x.activado?'<button class="btn s" onclick="activar('+x.id+',false)">↩️ Deshacer</button>':'<button class="btn" onclick="activar('+x.id+',true)">✅ Activado</button>')+
+      '<button class="btn s" onclick="abrir(\'rep'+i+'\')">🔄 Reposición</button><button class="btn s" onclick="abrir(\'inc'+i+'\')">🔧 Incidencia</button></div>'+
+      '<div id="rep'+i+'" hidden class="card" style="margin-top:8px"><b>🔄 ¿Qué has puesto en '+esc(x.apartamento)+'?</b><select id="rs'+i+'"><option value="">Elige…</option>'+REPO.map(function(r){return '<option value="'+r[0]+'|'+r[1]+'">'+r[0]+' (unos '+r[1]+' €)</option>'}).join("")+'</select><input id="ro'+i+'" placeholder="Otro objeto…"><input id="rp'+i+'" inputmode="decimal" placeholder="Precio si es otro objeto"><label>📷 Foto (opcional)</label><input type="file" accept="image/*" id="rf'+i+'"><div class="acc"><button class="btn" onclick="reponer('+i+',\''+esc(x.apartamento)+'\')">Apuntar</button></div></div>'+
+      '<div id="inc'+i+'" hidden class="card" style="margin-top:8px"><b>🔧 Incidencia en '+esc(x.apartamento)+'</b><textarea id="id'+i+'" rows="3" placeholder="¿Qué está roto o no funciona?"></textarea><label>📷 Fotos</label><input type="file" accept="image/*" multiple id="if'+i+'"><div class="acc"><button class="btn s" onclick="incidencia('+i+',\''+esc(x.apartamento)+'\',false)">Enviar a mantenimiento (puede esperar)</button><button class="btn" style="background:#b91c1c;color:#fff" onclick="incidencia('+i+',\''+esc(x.apartamento)+'\',true)">🔴 URGENTE · avisar a José ya</button></div></div>'+
+    '</div>';
+  });
+  box.innerHTML=h;
+}
+function abrir(id){var e=document.getElementById(id);e.hidden=!e.hidden}
+async function activar(id,si){try{await rpc("rec_activado",{p_id:id,p_si:si});cargarActivar()}catch(e){alert2(document.getElementById("act"),msgErr(e))}}
+async function reponer(i,apt){var s=document.getElementById("rs"+i).value,o=document.getElementById("ro"+i).value.trim(),obj,pr;
+  if(s){obj=s.split("|")[0];pr=+s.split("|")[1]}else if(o){obj=o;pr=parseFloat((document.getElementById("rp"+i).value||"0").replace(",","."))||0}else{alert2(document.getElementById("rep"+i),"Elige o escribe el objeto");return}
+  var f=document.getElementById("rf"+i).files[0];
+  try{await rpc("reposicion_v2",{p_apartamento:apt,p_objeto:obj,p_precio:pr,p_pendiente:false,p_foto_roto:null,p_foto_nuevo:f?await reducir(f):null});cargarActivar()}catch(e){alert2(document.getElementById("rep"+i),msgErr(e))}}
+async function incidencia(i,apt,urg){var d=document.getElementById("id"+i).value.trim(),fs=[].slice.call(document.getElementById("if"+i).files);var box=document.getElementById("inc"+i);
+  if(!d){alert2(box,"Escribe qué pasa");return}
+  try{var pid=await rpc("incidencia_v2",{p_apartamento:apt,p_descripcion:d,p_urgente:urg});for(var j=0;j<fs.length&&j<10;j++){await rpc("parte_foto",{p_id:pid,p_datos:await reducir(fs[j])})}
+    alert2(document.getElementById("act"),urg?"🔴 Parte urgente #"+pid+" enviado. Claude avisa a José por WhatsApp ahora.":"🔧 Parte #"+pid+" enviado a mantenimiento.");cargarActivar()}catch(e){alert2(box,msgErr(e))}}
 function ir(t){tab=t;document.querySelectorAll("#tabs button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)});pintar();scrollTo(0,0)}
 document.getElementById("tabs").onclick=function(e){if(e.target.dataset.t)ir(e.target.dataset.t)};
 
