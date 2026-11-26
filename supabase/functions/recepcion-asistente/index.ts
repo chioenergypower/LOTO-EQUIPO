@@ -27,7 +27,7 @@ async function rest(path: string, init: RequestInit = {}) {
 const rpc = (fn: string, args: Record<string, unknown>) => rest(`rpc/${fn}`, { method: "POST", body: JSON.stringify(args) });
 const enc = encodeURIComponent;
 
-const FICHA_COLS = "id,nombre_icnea,categoria,plazas_junta,dormitorios,banos,altillo,camas,camas_matrimonio,camas_individuales,sofas_cama,literas,ascensor,parada_telesilla,enlace_fotos,tostadora,microondas,horno,lavadora,secadora,lavavajillas,cafetera,vitro_induccion,tv,calefaccion,terraza,guardaesquis,cuna,trona,mascotas,equipamiento_otros,notas,pendiente,m2,plancha,secador,wifi,parking_icnea";
+const FICHA_COLS = "id,nombre_icnea,categoria,plazas_junta,dormitorios,banos,altillo,camas,camas_matrimonio,camas_individuales,sofas_cama,literas,ascensor,parada_telesilla,enlace_fotos,tostadora,microondas,horno,lavadora,secadora,lavavajillas,cafetera,vitro_induccion,tv,calefaccion,terraza,guardaesquis,cuna,trona,mascotas,equipamiento_otros,notas,pendiente,m2,plancha,secador,wifi,wifi_datos,parking_icnea";
 
 const tools = [
   { name: "buscar_conocimiento", description: "Busca en las respuestas validadas por Chio (bot_conocimiento) y en las reglas del proyecto. Úsalo para normas, horarios, política, carretera, servicios, cómo actuar.", input_schema: { type: "object", properties: { texto: { type: "string", description: "1-3 palabras clave" }, apartamento: { type: "string" } }, required: ["texto"] } },
@@ -79,7 +79,12 @@ async function runTool(name: string, i: any, k: string, propuestas: any[]) {
     }
     case "ficha_apartamento": {
       const r = await rest(`apartamentos_ficha?select=${FICHA_COLS}&id=ilike.*${enc(String(i.nombre).trim())}*&limit=2`);
-      return r?.length ? r : { error: "No encuentro ese apartamento" };
+      if (!r?.length) return { error: "No encuentro ese apartamento" };
+      for (const f of r) {
+        const u = (await rest(`apartamentos?select=edificio,planta,puerta,parking,propio&id=eq.${enc(f.id)}&limit=1`))?.[0];
+        if (u) Object.assign(f, { edificio: u.edificio, planta: u.planta, puerta: u.puerta, plaza_parking: u.parking, de_loto: u.propio });
+      }
+      return r;
     }
     case "disponibilidad": {
       const pisos = await rpc("rec_disponibles", { p_k: k, p_desde: i.llegada, p_hasta: i.salida, p_personas: i.personas });
@@ -132,7 +137,7 @@ const SISTEMA = (yo: string, hoy: string) => `Eres el asistente de recepción de
 Usa SIEMPRE las herramientas antes de afirmar algo sobre un apartamento, disponibilidad, limpieza o normas. Si la información no está, dilo claramente («no lo tengo registrado») y sugiere preguntar a Chio; nunca inventes.
 
 Reglas que no se rompen:
-- Capacidad: pisos de propietarios, nunca más personas que las plazas de la Junta (plazas_junta). Pisos de Loto en reserva directa: hasta 1 persona más que la Junta (campo duermen de disponibilidad), dicho solo de palabra; en ICNEA se apuntan siempre las plazas de la Junta. Di siempre las camas reales del piso.
+- Cada vez que nombres un apartamento di SIEMPRE dónde está: edificio (Alpes 1 = P1, Alpes 2 = P2, Alpes 3 = P3, Galatinos, Atlas abajo en la plaza, Montaire, Alcazaba, Slalom, Montreal…), planta y puerta (p. ej. «Valle · Alpes 2, 1º K»). Saca esos datos de ficha_apartamento o de disponibilidad (edificio, planta, puerta). Wifi: está en el campo wifi_datos de la ficha.\n- Capacidad: pisos de propietarios, nunca más personas que las plazas de la Junta (plazas_junta). Pisos de Loto en reserva directa: hasta 1 persona más que la Junta (campo duermen de disponibilidad), dicho solo de palabra; en ICNEA se apuntan siempre las plazas de la Junta. Di siempre las camas reales del piso.
 - Al ofrecer pisos libres: primero los de Loto (de LUX a 3ª), luego los de propietarios de LUX/1ª/2ª, y los de 3ª (Blessed, Sunny, Terralta, Queen) solo si no queda otra. Da siempre el precio total si está; si no hay tarifa cargada, dilo («precio: consultar a Chio/ICNEA»).
 - Precios (también de más de 7 noches), excepciones y reembolsos: los decide el recepcionista (Sete/Santi) con su criterio; ayúdale con los datos. Foto de Booking con precio → 10 % de descuento sobre ese total si reserva directo.
 - Para cerrar reserva se pide: nombre completo, email, teléfono y número de huéspedes. NUNCA el DNI. Sin email no hay reserva.
