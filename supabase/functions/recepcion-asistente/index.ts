@@ -1,0 +1,156 @@
+// Asistente de recepción (burbuja de la app de Sete y Santi).
+// Comprueba el enlace personal, consulta la base del equipo y responde con Claude.
+// Necesita el secreto ANTHROPIC_API_KEY (lo pega Chio en Supabase → Edge Functions → Secrets).
+// 🔴 Nunca devuelve códigos de cajetín, wifi, IBAN ni datos de propietarios.
+
+const SB = Deno.env.get("SUPABASE_URL")!;
+const SR = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const AK = Deno.env.get("ANTHROPIC_API_KEY");
+const MODEL = Deno.env.get("RECEPCION_MODELO") ?? "claude-sonnet-5-5";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "content-type, apikey, authorization",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const json = (d: unknown, s = 200) => new Response(JSON.stringify(d), { status: s, headers: { ...cors, "content-type": "application/json" } });
+
+async function rest(path: string, init: RequestInit = {}) {
+  const r = await fetch(`${SB}/rest/v1/${path}`, {
+    ...init,
+    headers: { apikey: SR, Authorization: `Bearer ${SR}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
+  });
+  const t = await r.text();
+  if (!r.ok) throw new Error(t.slice(0, 300));
+  return t ? JSON.parse(t) : null;
+}
+const rpc = (fn: string, args: Record<string, unknown>) => rest(`rpc/${fn}`, { method: "POST", body: JSON.stringify(args) });
+const enc = encodeURIComponent;
+
+const FICHA_COLS = "id,nombre_icnea,categoria,plazas_junta,dormitorios,banos,altillo,camas,camas_matrimonio,camas_individuales,sofas_cama,literas,ascensor,parada_telesilla,enlace_fotos,tostadora,microondas,horno,lavadora,secadora,lavavajillas,cafetera,vitro_induccion,tv,calefaccion,terraza,guardaesquis,cuna,trona,mascotas,equipamiento_otros,notas,pendiente,m2,plancha,secador,wifi,parking_icnea";
+
+const tools = [
+  { name: "buscar_conocimiento", description: "Busca en las respuestas validadas por Chio (bot_conocimiento) y en las reglas del proyecto. Úsalo para normas, horarios, política, carretera, servicios, cómo actuar.", input_schema: { type: "object", properties: { texto: { type: "string", description: "1-3 palabras clave" }, apartamento: { type: "string" } }, required: ["texto"] } },
+  { name: "ficha_apartamento", description: "Ficha de un apartamento: plazas de la Junta, camas, equipamiento (tostadora, lavavajillas, cuna...), mascotas, telesilla, fotos.", input_schema: { type: "object", properties: { nombre: { type: "string" } }, required: ["nombre"] } },
+  { name: "disponibilidad", description: "Apartamentos libres entre dos fechas para N personas, con plazas y precio total si hay tarifa cargada.", input_schema: { type: "object", properties: { llegada: { type: "string", description: "YYYY-MM-DD" }, salida: { type: "string", description: "YYYY-MM-DD" }, personas: { type: "integer" } }, required: ["llegada", "salida", "personas"] } },
+  { name: "estado_pisos", description: "Estado de los pisos en una fecha: ocupado, llega, sale, limpio, limpiando, por limpiar, bloqueado, partes abiertos. Sin fecha = hoy.", input_schema: { type: "object", properties: { fecha: { type: "string" }, apartamento: { type: "string" } } } },
+  { name: "parte_nieve_carretera", description: "Información actual de Sierra Nevada (pistas, remontes, nieve) y enlaces de carretera DGT/AEMET.", input_schema: { type: "object", properties: {} } },
+  { name: "proponer_reserva", description: "Cuando el recepcionista ya ha cerrado con el cliente, prepara la ficha de reserva para que la confirme con un botón. No crea nada por sí sola.", input_schema: { type: "object", properties: { apartamento: { type: "string" }, llegada: { type: "string" }, salida: { type: "string" }, adultos: { type: "integer" }, ninos: { type: "integer" }, bebes: { type: "integer" }, nombre: { type: "string" }, apellidos: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, precio_total: { type: "number" }, notas: { type: "string" } }, required: ["apartamento", "llegada", "salida", "precio_total"] } },
+  { name: "crear_parte", description: "Crea un parte de mantenimiento (avería) asignado a José Matador.", input_schema: { type: "object", properties: { apartamento: { type: "string" }, descripcion: { type: "string" }, urgente: { type: "boolean" } }, required: ["apartamento", "descripcion"] } },
+  { name: "nota_traspaso", description: "Deja una nota para el otro recepcionista (traspaso de turno).", input_schema: { type: "object", properties: { texto: { type: "string" }, apartamento: { type: "string" }, importante: { type: "boolean" } }, required: ["texto"] } },
+];
+
+async function apto(nombre: string): Promise<string | null> {
+  const r = await rest(`apartamentos_ficha?select=id&id=ilike.*${enc(nombre.trim())}*&limit=1`);
+  return r?.[0]?.id ?? null;
+}
+
+async function runTool(name: string, i: any, k: string, propuestas: any[]) {
+  switch (name) {
+    case "buscar_conocimiento": {
+      const q = enc(`*${String(i.texto).trim()}*`);
+      const or = `(tema.ilike.${q},pregunta_tipo.ilike.${q},respuesta_buena.ilike.${q})`;
+      const a = await rest(`bot_conocimiento?select=tema,pregunta_tipo,respuesta_buena,apartamento,temporada&or=${or}&limit=8`);
+      const reg = await rpc("rec_reglas_buscar", { p_texto: i.texto }).catch(() => []);
+      return { conocimiento: a, reglas: reg };
+    }
+    case "ficha_apartamento": {
+      const r = await rest(`apartamentos_ficha?select=${FICHA_COLS}&id=ilike.*${enc(String(i.nombre).trim())}*&limit=2`);
+      return r?.length ? r : { error: "No encuentro ese apartamento" };
+    }
+    case "disponibilidad":
+      return await rpc("rec_disponibles", { p_k: k, p_desde: i.llegada, p_hasta: i.salida, p_personas: i.personas });
+    case "estado_pisos": {
+      const p = await rpc("rec_panel", { p_k: k, p_fecha: i.fecha ?? null });
+      let pisos = p.pisos;
+      if (i.apartamento) pisos = pisos.filter((x: any) => x.apartamento.toLowerCase().includes(String(i.apartamento).toLowerCase()));
+      return { fecha: p.fecha, ultima_sincronizacion_icnea: p.ultima_sync, pisos, llegadas_manana: p.llegadas_manana };
+    }
+    case "parte_nieve_carretera": {
+      let texto = "";
+      try {
+        const r = await fetch("https://sierranevada.es/es/", { headers: { "user-agent": "Mozilla/5.0" } });
+        const h = await r.text();
+        texto = h.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 3500);
+      } catch { texto = "No he podido leer la web de Sierra Nevada ahora."; }
+      return { web_sierra_nevada: texto, enlaces: { estacion: "https://sierranevada.es/es/", carreteras_dgt: "https://infocar.dgt.es/etraffic/", dgt_telefono: "011", aemet: "https://www.aemet.es/es/eltiempo/prediccion/montana?w=1&p=nev1" } };
+    }
+    case "proponer_reserva": {
+      const id = await apto(i.apartamento);
+      const p = { ...i, apartamento: id ?? i.apartamento };
+      propuestas.push(p);
+      return { ok: true, nota: "Ficha preparada. El recepcionista debe revisarla y pulsar «Cerrar reserva». Faltan datos si no hay nombre, email o teléfono." };
+    }
+    case "crear_parte": {
+      const id = await apto(i.apartamento);
+      if (!id) return { error: "Apartamento no encontrado" };
+      const n = await rpc("rec_parte", { p_k: k, p_apartamento: id, p_descripcion: i.descripcion, p_urgente: !!i.urgente });
+      return { ok: true, parte: n };
+    }
+    case "nota_traspaso": {
+      const n = await rpc("rec_nota", { p_k: k, p_texto: i.texto, p_apartamento: i.apartamento ?? null, p_para: null, p_importante: !!i.importante });
+      return { ok: true, nota: n };
+    }
+  }
+  return { error: "herramienta desconocida" };
+}
+
+const SISTEMA = (yo: string, hoy: string) => `Eres el asistente de recepción de Loto Group (apartamentos turísticos en Sierra Nevada, Pradollano). Hablas con ${yo}, recepcionista, que muchas veces está al teléfono con un cliente: responde en español, MUY corto y directo, primero el dato que necesita (sí/no, lista de pisos con precio), luego lo mínimo. Hoy es ${hoy} (hora de Madrid).
+
+Usa SIEMPRE las herramientas antes de afirmar algo sobre un apartamento, disponibilidad, limpieza o normas. Si la información no está, dilo claramente («no lo tengo registrado») y sugiere preguntar a Chio; nunca inventes.
+
+Reglas que no se rompen:
+- Nunca ofrecer más personas que las plazas de la Junta (plazas_junta). Bebés aparte solo si Chio lo ha validado.
+- Al ofrecer pisos libres: primero los propios de Loto, luego 1ª/2ª/LUX, y los de 3ª (Blessed, Sunny, Terralta, Queen) solo si no queda otra. Da siempre el precio total si está; si no hay tarifa cargada, dilo («precio: consultar a Chio/ICNEA»).
+- Precios de más de 7 noches: los cierra Chio. Hasta 7 noches el recepcionista decide. Foto de Booking con precio → 10 % de descuento sobre ese total si reserva directo.
+- Para cerrar reserva se pide: nombre completo, email, teléfono y número de huéspedes. NUNCA el DNI. Sin email no hay reserva.
+- Check-in 17:00, check-out 11:00. Entrada antes / salida tarde sin coste según limpieza del día.
+- Cancelaciones fuera de 30 días: primero NO. Reembolsos, compensaciones y excepciones: los decide Chio.
+- Recomendar siempre cadenas; nosotros no salimos a ayudar en carretera. «Cerca de la plaza» = solo Atlas.
+- Nunca des códigos de cajetín, wifi, parking, teléfonos del equipo, IBAN ni nada de propietarios.
+- La disponibilidad sale de la última sincronización con ICNEA; si es antigua (más de 1 día) avísalo y que confirmen en ICNEA antes de cerrar.
+- Cuando el recepcionista diga que ha cerrado con el cliente, usa proponer_reserva con todos los datos que tengas; la reserva se crea al pulsar el botón.`;
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  try {
+    const { k, pregunta, historial } = await req.json();
+    if (!k || !pregunta) return json({ error: "faltan_datos" }, 400);
+    const yo = (await rest(`equipo?select=id,nombre,rol,activo&clave=eq.${enc(k)}&limit=1`))?.[0];
+    if (!yo || !yo.activo || yo.rol !== "recepcion") return json({ error: "enlace_no_valido" }, 403);
+    if (!AK) return json({ respuesta: "⚠️ El asistente aún no está activado: falta la clave de Claude en Supabase (Chio)." });
+
+    const hoy = new Date().toLocaleString("es-ES", { timeZone: "Europe/Madrid", dateStyle: "full", timeStyle: "short" });
+    const msgs: any[] = [];
+    for (const h of (historial ?? []).slice(-6)) {
+      if (h.pregunta && h.respuesta) { msgs.push({ role: "user", content: h.pregunta }); msgs.push({ role: "assistant", content: h.respuesta }); }
+    }
+    msgs.push({ role: "user", content: String(pregunta).slice(0, 4000) });
+    const propuestas: any[] = [];
+    let respuesta = "";
+    for (let paso = 0; paso < 6; paso++) {
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "x-api-key": AK, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+        body: JSON.stringify({ model: MODEL, max_tokens: 1200, system: SISTEMA(yo.nombre, hoy), tools, messages: msgs }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d?.error?.message ?? "error_claude");
+      msgs.push({ role: "assistant", content: d.content });
+      const usos = d.content.filter((c: any) => c.type === "tool_use");
+      respuesta = d.content.filter((c: any) => c.type === "text").map((c: any) => c.text).join("\n").trim();
+      if (!usos.length || d.stop_reason !== "tool_use") break;
+      const res = [];
+      for (const u of usos) {
+        let out;
+        try { out = await runTool(u.name, u.input, k, propuestas); } catch (e) { out = { error: String((e as Error).message) }; }
+        res.push({ type: "tool_result", tool_use_id: u.id, content: JSON.stringify(out).slice(0, 15000) });
+      }
+      msgs.push({ role: "user", content: res });
+    }
+    await rest("rec_chat", { method: "POST", body: JSON.stringify({ persona: yo.id, pregunta: String(pregunta).slice(0, 4000), respuesta }) }).catch(() => {});
+    return json({ respuesta, propuestas });
+  } catch (e) {
+    return json({ error: String((e as Error).message ?? e) }, 500);
+  }
+});

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Recepción · Loto</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--fg:#17202b;--mut:#66727f;--line:#e2e7ee;--acc:#0e5a7a;--acc2:#e6f2f7;
+--ok:#1f8a4c;--okb:#e5f5ec;--warn:#b86a00;--warnb:#fff2dc;--bad:#c0392b;--badb:#fde9e7;--blue:#2457c5;--blueb:#e8eefc;--grey:#8792a0;--greyb:#eef0f3}
+@media (prefers-color-scheme:dark){:root{--bg:#0f141a;--card:#18202a;--fg:#e8edf2;--mut:#93a0ad;--line:#2a3542;--acc:#5fb4d6;--acc2:#16313d;
+--ok:#4ccb83;--okb:#13301f;--warn:#f0a63a;--warnb:#33260f;--bad:#ff7a6b;--badb:#3a1916;--blue:#7ea4ff;--blueb:#18233e;--grey:#93a0ad;--greyb:#222b35;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 Inter,system-ui,sans-serif;padding-bottom:90px}
+header{position:sticky;top:0;z-index:5;background:var(--acc);color:#fff;padding:12px max(16px,env(safe-area-inset-left)) 10px}
+header h1{margin:0;font-size:18px}
+header .sub{font-size:12px;opacity:.85}
+nav{display:flex;gap:6px;overflow-x:auto;padding:8px max(16px,env(safe-area-inset-left));background:var(--card);border-bottom:1px solid var(--line)}
+nav button{flex:none;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:20px;padding:7px 13px;font:inherit;font-size:14px;cursor:pointer}
+nav button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+main{max-width:1100px;margin:0 auto;padding:14px max(16px,env(safe-area-inset-left))}
+h2{font-size:16px;margin:18px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.kpi b{display:block;font-size:24px}
+.kpi span{font-size:12px;color:var(--mut)}
+.piso{border-radius:10px;padding:9px 10px;border:1px solid var(--line);background:var(--card)}
+.piso .n{font-weight:700}
+.piso .e{font-size:12px;color:var(--mut)}
+.tag{display:inline-block;font-size:12px;font-weight:600;border-radius:6px;padding:2px 7px;margin-top:4px}
+.s-limpio,.s-listo_para_entrar{background:var(--okb);color:var(--ok)}
+.s-libre{background:var(--greyb);color:var(--grey)}
+.s-ocupado{background:var(--blueb);color:var(--blue)}
+.s-por_limpiar{background:var(--badb);color:var(--bad)}
+.s-limpiando{background:var(--warnb);color:var(--warn)}
+.s-bloqueado{background:var(--greyb);color:var(--fg)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mut{color:var(--mut);font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--fg);width:100%}
+label{font-size:12px;color:var(--mut);display:block;margin-top:6px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{border:0;border-radius:9px;padding:10px 14px;font:inherit;font-weight:600;background:var(--acc);color:#fff;cursor:pointer}
+.btn.s{background:var(--acc2);color:var(--acc)}
+.btn.r{background:var(--bad)}
+.alert{border-radius:10px;padding:10px;margin-bottom:10px;font-size:14px}
+.alert.w{background:var(--warnb);color:var(--warn)}
+.alert.b{background:var(--badb);color:var(--bad)}
+.alert.i{background:var(--acc2);color:var(--acc)}
+.li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+a{color:var(--acc)}
+/* Burbuja */
+#fab{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));width:62px;height:62px;border-radius:50%;border:0;background:var(--acc);color:#fff;font-size:28px;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;z-index:20}
+#chat{position:fixed;inset:auto max(12px,env(safe-area-inset-right)) calc(90px + env(safe-area-inset-bottom)) auto;width:min(420px,calc(100vw - 24px));height:min(640px,calc(100vh - 120px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;z-index:19}
+#chat header{position:static;border-radius:16px 16px 0 0}
+#log{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.m{max-width:88%;padding:8px 10px;border-radius:12px;white-space:pre-wrap;font-size:14px}
+.m.u{align-self:flex-end;background:var(--acc);color:#fff}
+.m.a{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}
+#chat form{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
+#chat form input{flex:1}
+.mic{width:44px;flex:none;border-radius:9px;border:1px solid var(--line);background:var(--bg);font-size:18px;cursor:pointer}
+.mic.on{background:var(--bad);color:#fff}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:0 8px 6px}
+.chips button{flex:none;font-size:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:14px;padding:5px 9px;cursor:pointer}
+</style>
+</head>
+<body>
+<header><h1>🛎️ Recepción Loto</h1><div class="sub" id="sub">Cargando…</div></header>
+<nav id="tabs">
+  <button data-t="hoy" class="on">Hoy</button>
+  <button data-t="manana">Mañana</button>
+  <button data-t="traspaso">Traspaso</button>
+  <button data-t="reservas">Reservas</button>
+  <button data-t="equipo">Limpieza y mantenimiento</button>
+  <button data-t="sierra">Nieve y carretera</button>
+</nav>
+<main id="app"></main>
+
+<button id="fab" title="Preguntar">💬</button>
+<section id="chat" hidden>
+  <header><h1 style="font-size:16px">Asistente de recepción</h1><div class="sub">Pregunta lo que necesites mientras atiendes</div></header>
+  <div id="log"></div>
+  <div class="chips">
+    <button>¿Qué hay libre del … al … para … personas?</button>
+    <button>¿Alma tiene tostadora?</button>
+    <button>¿Está limpio Nordkapp?</button>
+    <button>Parte de nieve y carretera</button>
+  </div>
+  <form id="f"><button type="button" class="mic" id="mic" title="Dictar">🎤</button><input id="q" placeholder="Escribe o dicta tu pregunta…" autocomplete="off"><button class="btn">➤</button></form>
+</section>
+
+<script src="../config.js"></script>
+<script src="../api.js"></script>
+<script>
+var D=null, tab="hoy", HIST=[];
+var NOMBRES={limpio:"🟢 Limpio",listo_para_entrar:"🟢 Listo · entra hoy",libre:"⚪ Libre",ocupado:"🔵 Ocupado",por_limpiar:"🔴 Por limpiar",limpiando:"🟠 Limpiando",bloqueado:"⛔ Cerrado"};
+var ERR={enlace_no_valido:"Tu enlace no es válido. Pide uno nuevo a Chio.",solo_recepcion:"Este enlace no es de recepción.",falta_email:"🔴 Sin email no hay reserva.",faltan_datos:"Faltan nombre o teléfono.",fechas_no_validas:"Revisa las fechas.",supera_plazas:"🔴 Supera las plazas de la Junta de ese piso.",no_disponible:"🔴 Ese piso ya no está libre en esas fechas.",sin_conexion:"Sin conexión. Reintenta."};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function fmt(d){if(!d)return"";var x=new Date(d);return x.toLocaleDateString("es-ES",{weekday:"short",day:"numeric",month:"short"})}
+function hora(d){return d?new Date(d).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}):""}
+function msgErr(e){return ERR[e.codigo]||e.message||"Error"}
+
+async function cargar(){
+  try{ D=await rpc("rec_panel",{p_fecha:null}); }
+  catch(e){ document.getElementById("app").innerHTML='<div class="alert b">'+esc(msgErr(e))+'</div>'; return; }
+  var vieja=D.ultima_sync&&(Date.now()-new Date(D.ultima_sync))>864e5;
+  document.getElementById("sub").textContent="Hola "+D.yo.nombre+" · "+fmt(D.fecha)+" · ICNEA sincronizado "+(D.ultima_sync?fmt(D.ultima_sync)+" "+hora(D.ultima_sync):"—")+(vieja?" ⚠️":"");
+  pintar();
+}
+function pisoHTML(p){
+  var l=p.limpieza, extra=[];
+  if(p.sale) extra.push("sale hoy"+(l&&l.hora_salida?" "+l.hora_salida:""));
+  if(p.llega) extra.push("entra hoy"+(p.hora_llegada?" "+p.hora_llegada:""));
+  if(l&&l.inicio&&!l.fin) extra.push("limpieza desde "+hora(l.inicio));
+  if(l&&l.fin) extra.push("limpio a las "+hora(l.fin));
+  if(p.partes_abiertos) extra.push("🔧 "+p.partes_abiertos+" parte(s)");
+  return '<div class="piso"><div class="n">'+esc(p.apartamento)+'</div><div class="e">'+esc(p.edificio||"")+'</div><span class="tag s-'+p.estado+'">'+NOMBRES[p.estado]+'</span>'+(extra.length?'<div class="mut">'+esc(extra.join(" · "))+'</div>':"")+(l&&l.nota?'<div class="mut">📝 '+esc(l.nota)+'</div>':"")+'</div>';
+}
+function pintar(){
+  var a=document.getElementById("app"), h="";
+  if(!D)return;
+  var vieja=D.ultima_sync&&(Date.now()-new Date(D.ultima_sync))>864e5;
+  if(vieja) h+='<div class="alert w">⚠️ Los datos de ICNEA no se han actualizado desde '+fmt(D.ultima_sync)+'. Antes de cerrar una reserva, confírmala en ICNEA.</div>';
+  var pend=D.notas.filter(function(n){return !n.hecho});
+  if(tab!=="traspaso"&&pend.length) h+='<div class="alert i">📌 Tienes '+pend.length+' nota(s) de traspaso pendientes. <a href="#" onclick="ir(\'traspaso\');return false">Ver</a></div>';
+  if(tab==="hoy"){
+    var c={}; D.pisos.forEach(function(p){c[p.estado]=(c[p.estado]||0)+1});
+    var lleg=D.pisos.filter(function(p){return p.llega}), sal=D.pisos.filter(function(p){return p.sale});
+    h+='<div class="kpis"><div class="kpi"><b>'+lleg.length+'</b><span>Entradas hoy</span></div><div class="kpi"><b>'+sal.length+'</b><span>Salidas hoy</span></div><div class="kpi"><b>'+(c.ocupado||0)+'</b><span>Ocupados</span></div><div class="kpi"><b>'+((c.por_limpiar||0)+(c.limpiando||0))+'</b><span>Por limpiar / limpiando</span></div><div class="kpi"><b>'+(c.libre||0)+'</b><span>Libres</span></div></div>';
+    h+='<h2>🟢 Entradas de hoy</h2>'+(lleg.length?'<div class="grid">'+lleg.map(pisoHTML).join("")+'</div>':'<div class="mut">Ninguna</div>');
+    h+='<h2>🟠 Salidas de hoy</h2>'+(sal.length?'<div class="grid">'+sal.map(pisoHTML).join("")+'</div>':'<div class="mut">Ninguna</div>');
+    var ed={}; D.pisos.forEach(function(p){(ed[p.edificio||"Otros"]=ed[p.edificio||"Otros"]||[]).push(p)});
+    h+='<h2>🏢 Estado de todos los alojamientos</h2>';
+    Object.keys(ed).forEach(function(k){h+='<div class="mut" style="margin:10px 0 4px;font-weight:600">'+esc(k)+'</div><div class="grid">'+ed[k].map(pisoHTML).join("")+'</div>'});
+  }
+  if(tab==="manana"){
+    h+='<h2>🟢 Llegan mañana</h2>'+(D.llegadas_manana.length?D.llegadas_manana.map(function(x){return '<div class="card"><b>'+esc(x.apartamento)+'</b> · '+x.noches+' noche(s) · hora: '+(x.hora?esc(x.hora):'<span style="color:var(--warn)">sin hora — pregúntala</span>')+'</div>'}).join(""):'<div class="mut">Nadie</div>');
+    h+='<h2>🟠 Salen mañana</h2>'+(D.salidas_manana.length?'<div class="card">'+D.salidas_manana.map(function(x){return esc(x.apartamento)}).join(" · ")+'</div>':'<div class="mut">Nadie</div>');
+  }
+  if(tab==="traspaso"){
+    h+='<div class="card"><b>Nueva nota para el otro recepcionista</b><textarea id="nt" rows="3" placeholder="Ej.: Cliente de Iris llega a las 22:00, ya tiene instrucciones. Llamar mañana a…"></textarea><div class="f2"><div><label>Apartamento (opcional)</label><input id="na"></div><div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--fg)"><input type="checkbox" id="ni" style="width:auto"> 🔴 Importante</label></div></div><div style="margin-top:8px"><button class="btn" onclick="nuevaNota()">Guardar nota</button></div></div>';
+    h+=D.notas.map(function(n){return '<div class="card" style="'+(n.hecho?'opacity:.55':'')+'"><div class="row" style="justify-content:space-between"><b>'+(n.importante?'🔴 ':'')+esc(n.de)+(n.apartamento?' · '+esc(n.apartamento):'')+'</b><span class="mut">'+fmt(n.ts)+' '+hora(n.ts)+'</span></div><div style="white-space:pre-wrap;margin:6px 0">'+esc(n.texto)+'</div>'+(n.hecho?'<span class="mut">✔ Hecho por '+esc(n.hecho_por)+'</span>':'<button class="btn s" onclick="notaHecha('+n.id+')">✔ Hecho</button>')+'</div>'}).join("")||'<div class="mut">Sin notas</div>';
+  }
+  if(tab==="reservas"){
+    h+='<div class="card"><b>Buscar disponibilidad</b><div class="f2"><div><label>Llegada</label><input type="date" id="d1"></div><div><label>Salida</label><input type="date" id="d2"></div></div><label>Personas (adultos + niños)</label><input type="number" id="dp" min="1" value="2"><div style="margin-top:8px"><button class="btn" onclick="buscar()">Buscar</button></div><div id="res"></div></div>';
+    h+='<div class="card" id="fr"><b>Cerrar reserva</b><div class="mut">🔴 Sin email no hay reserva · nunca pedir DNI · más de 7 noches: precio de Chio</div>'+formReserva({})+'</div>';
+    h+='<h2>Reservas cerradas desde recepción</h2>'+(D.reservas.map(function(r){return '<div class="card"><b>'+esc(r.apartamento)+'</b> · '+fmt(r.llegada)+' → '+fmt(r.salida)+' · '+esc(r.nombre)+' · '+r.precio_total+' €<br><span class="tag '+(r.estado==="creada"?"s-limpio":r.estado==="error"?"s-por_limpiar":"s-limpiando")+'">'+(r.estado==="pendiente"?"⏳ Pendiente de crear en ICNEA":r.estado==="creada"?"✔ Creada en ICNEA":esc(r.estado))+'</span> <span class="mut">por '+esc(r.creado_por)+'</span>'+(r.error?'<div class="mut">'+esc(r.error)+'</div>':'')+'</div>'}).join("")||'<div class="mut">Ninguna</div>');
+  }
+  if(tab==="equipo"){
+    var aps=D.pisos.map(function(p){return '<option>'+esc(p.apartamento)+'</option>'}).join("");
+    h+='<div class="card"><b>🔧 Avisar avería a mantenimiento</b><label>Apartamento</label><select id="pa">'+aps+'</select><label>Qué pasa</label><textarea id="pd" rows="2"></textarea><label style="display:flex;gap:6px;align-items:center;color:var(--fg)"><input type="checkbox" id="pu" style="width:auto"> 🔴 Urgente (hay cliente dentro / entra hoy)</label><div style="margin-top:8px"><button class="btn" onclick="nuevoParte()">Crear parte</button></div></div>';
+    h+='<div class="card"><b>🧹 Mensaje a limpieza</b><div class="mut">Solo apartamento, hora y peticiones. Nunca datos del cliente.</div><label>Apartamento</label><select id="ma"><option value="">—</option>'+aps+'</select><label>Mensaje</label><textarea id="mt" rows="2" placeholder="Ej.: Iris entra a las 15:00, dejar cuna."></textarea><div style="margin-top:8px"><button class="btn" onclick="nuevoMensaje()">Enviar a limpieza</button></div></div>';
+    h+='<h2>Partes abiertos</h2>'+(D.partes.map(function(p){return '<div class="card">'+(p.urgente?'🔴 ':'')+'<b>'+esc(p.apartamento)+'</b> · '+esc(p.estado)+' · <span class="mut">'+fmt(p.creado)+'</span><div>'+esc(p.descripcion)+'</div></div>'}).join("")||'<div class="mut">Ninguno</div>');
+    h+='<h2>Mensajes del equipo (3 días)</h2><div class="card">'+(D.mensajes_equipo.map(function(m){return '<div class="li"><div><b>'+esc(m.de)+'</b>'+(m.apartamento?' · '+esc(m.apartamento):'')+'<div>'+esc(m.texto)+'</div></div><span class="mut">'+hora(m.ts)+'</span></div>'}).join("")||'<span class="mut">Sin mensajes</span>')+'</div>';
+  }
+  if(tab==="sierra"){
+    h+='<div class="card"><b>❄️ Sierra Nevada</b><div class="mut">Pide el parte actualizado al asistente (botón 💬) o abre las webs oficiales:</div><div class="li"><span>Estación (pistas, remontes, nieve)</span><a href="https://sierranevada.es/es/" target="_blank" rel="noopener">Abrir</a></div><div class="li"><span>Carreteras DGT (A-395 / GR-420) · teléfono 011</span><a href="https://infocar.dgt.es/etraffic/" target="_blank" rel="noopener">Abrir</a></div><div class="li"><span>AEMET montaña · Sierra Nevada</span><a href="https://www.aemet.es/es/eltiempo/prediccion/montana?w=1&p=nev1" target="_blank" rel="noopener">Abrir</a></div></div>';
+    h+='<div class="alert w">🟠 Recomendar SIEMPRE traer cadenas (tela o hierro). Con nevadas la Guardia Civil no deja subir sin cadenas, aunque lleven neumáticos de invierno. Nosotros no salimos a ayudar en carretera.</div><div class="alert i">🚧 Hay obras: Google Maps solo hasta el cruce de la Zona Alta; allí derecha (curva cerrada) y recto, y a los 3–5 min desvío a la derecha con cartel ZONA ALTA.</div><button class="btn" onclick="preguntar(\'Dame el parte de nieve y el estado de la carretera de hoy\')">Pedir parte al asistente</button>';
+  }
+  a.innerHTML=h;
+}
+function formReserva(r){
+  var aps=D.pisos.map(function(p){return '<option'+(p.apartamento===r.apartamento?' selected':'')+'>'+esc(p.apartamento)+'</option>'}).join("");
+  function v(k){return r[k]==null?"":esc(r[k])}
+  return '<div class="f2"><div><label>Apartamento</label><select data-k="apartamento">'+aps+'</select></div><div><label>Precio total €</label><input type="number" step="0.01" data-k="precio_total" value="'+v("precio_total")+'"></div><div><label>Llegada</label><input type="date" data-k="llegada" value="'+v("llegada")+'"></div><div><label>Salida</label><input type="date" data-k="salida" value="'+v("salida")+'"></div><div><label>Adultos</label><input type="number" min="1" data-k="adultos" value="'+(r.adultos||2)+'"></div><div><label>Niños</label><input type="number" min="0" data-k="ninos" value="'+(r.ninos||0)+'"></div><div><label>Nombre</label><input data-k="nombre" value="'+v("nombre")+'"></div><div><label>Apellidos</label><input data-k="apellidos" value="'+v("apellidos")+'"></div><div><label>Email 🔴</label><input type="email" data-k="email" value="'+v("email")+'"></div><div><label>Teléfono</label><input type="tel" data-k="telefono" value="'+v("telefono")+'"></div></div><label>Notas (cuna, hora de llegada…)</label><input data-k="notas" value="'+v("notas")+'"><div style="margin-top:8px"><button class="btn" onclick="cerrarReserva(this)">✅ Cerrar reserva</button></div>';
+}
+async function cerrarReserva(b){
+  var box=b.closest(".card,.m"), p={};
+  box.querySelectorAll("[data-k]").forEach(function(i){p[i.dataset.k]=i.value});
+  var noches=(new Date(p.salida)-new Date(p.llegada))/864e5;
+  if(noches>7 && !confirmar(box,"Son "+noches+" noches: ¿el precio lo ha validado Chio?")) return;
+  b.disabled=true;
+  try{ var id=await rpc("rec_reserva",{p:p}); box.innerHTML='<div class="alert i">✔ Reserva #'+id+' guardada y piso bloqueado. Se creará en ICNEA y el cliente recibirá su confirmación.</div>'; cargar(); }
+  catch(e){ b.disabled=false; alert2(box,msgErr(e)); }
+}
+function confirmar(box,t){ if(box.dataset.ok==="1")return true; box.dataset.ok="1"; alert2(box,t+" Pulsa otra vez para confirmar."); return false; }
+function alert2(box,t){var d=document.createElement("div");d.className="alert b";d.textContent=t;box.appendChild(d);setTimeout(function(){d.remove()},7000)}
+async function buscar(){
+  var r=document.getElementById("res"); r.innerHTML='<div class="mut">Buscando…</div>';
+  try{
+    var d=await rpc("rec_disponibles",{p_desde:document.getElementById("d1").value,p_hasta:document.getElementById("d2").value,p_personas:+document.getElementById("dp").value});
+    d.sort(function(a,b){return (b.propio-a.propio)});
+    r.innerHTML=d.length?d.map(function(x){return '<div class="li"><div><b>'+esc(x.apartamento)+'</b> '+(x.propio?'<span class="tag s-limpio">propio</span>':'')+' <span class="mut">'+esc(x.edificio||"")+' · '+x.plazas+' plazas'+(x.categoria?' · '+esc(x.categoria):'')+'</span></div><div>'+(x.precio_total!=null?'<b>'+x.precio_total+' €</b>':'<span class="mut">precio: ICNEA/Chio</span>')+'</div></div>'}).join(""):'<div class="mut">Nada libre con esas plazas.</div>';
+  }catch(e){ r.innerHTML='<div class="alert b">'+esc(msgErr(e))+'</div>'; }
+}
+async function nuevaNota(){try{await rpc("rec_nota",{p_texto:document.getElementById("nt").value,p_apartamento:document.getElementById("na").value,p_para:null,p_importante:document.getElementById("ni").checked});cargar()}catch(e){alert2(document.getElementById("app"),msgErr(e))}}
+async function notaHecha(id){try{await rpc("rec_nota_hecha",{p_id:id});cargar()}catch(e){}}
+async function nuevoParte(){var t=document.getElementById("pd").value.trim();if(!t)return;try{var n=await rpc("rec_parte",{p_apartamento:document.getElementById("pa").value,p_descripcion:t,p_urgente:document.getElementById("pu").checked});alert2(document.getElementById("app"),"✔ Parte #"+n+" creado y asignado a José.");cargar()}catch(e){alert2(document.getElementById("app"),msgErr(e))}}
+async function nuevoMensaje(){var t=document.getElementById("mt").value.trim();if(!t)return;try{await rpc("rec_mensaje",{p_para:"limpieza",p_apartamento:document.getElementById("ma").value,p_texto:t});cargar()}catch(e){alert2(document.getElementById("app"),msgErr(e))}}
+function ir(t){tab=t;document.querySelectorAll("#tabs button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t)});pintar();scrollTo(0,0)}
+document.getElementById("tabs").onclick=function(e){if(e.target.dataset.t)ir(e.target.dataset.t)};
+
+/* ── Asistente ── */
+var chat=document.getElementById("chat"), log=document.getElementById("log");
+document.getElementById("fab").onclick=function(){chat.hidden=!chat.hidden; if(!chat.hidden)document.getElementById("q").focus()};
+function burbuja(t,cls){var d=document.createElement("div");d.className="m "+cls;d.textContent=t;log.appendChild(d);log.scrollTop=1e9;return d}
+async function preguntar(t){
+  if(!t)return; chat.hidden=false; burbuja(t,"u"); var w=burbuja("…","a");
+  try{
+    var r=await fetch(LOTO.url+"/functions/v1/recepcion-asistente",{method:"POST",headers:{"Content-Type":"application/json",apikey:LOTO.anon,Authorization:"Bearer "+LOTO.anon},body:JSON.stringify({k:lotoClave(),pregunta:t,historial:HIST})});
+    var j=await r.json();
+    if(j.error){w.textContent=ERR[j.error]||("Error: "+j.error);return}
+    w.textContent=j.respuesta||"(sin respuesta)"; HIST.push({pregunta:t,respuesta:j.respuesta}); HIST=HIST.slice(-6);
+    (j.propuestas||[]).forEach(function(p){var c=document.createElement("div");c.className="m a";c.style.maxWidth="100%";c.innerHTML="<b>📝 Revisa y confirma la reserva</b>"+formReserva(p);log.appendChild(c);log.scrollTop=1e9});
+  }catch(e){w.textContent="Sin conexión con el asistente. Reintenta."}
+}
+document.getElementById("f").onsubmit=function(e){e.preventDefault();var q=document.getElementById("q");var t=q.value.trim();q.value="";preguntar(t)};
+document.querySelectorAll(".chips button").forEach(function(b){b.onclick=function(){var q=document.getElementById("q");if(b.textContent.indexOf("…")>-1){q.value=b.textContent;q.focus()}else preguntar(b.textContent)}});
+(function(){var SR=window.SpeechRecognition||window.webkitSpeechRecognition,m=document.getElementById("mic");if(!SR){m.hidden=true;return}
+  var rec=new SR();rec.lang="es-ES";rec.interimResults=true;var on=false;
+  rec.onresult=function(e){var t="";for(var i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;document.getElementById("q").value=t};
+  rec.onend=function(){on=false;m.classList.remove("on")};
+  m.onclick=function(){if(on){rec.stop();return}try{rec.start();on=true;m.classList.add("on")}catch(e){}};
+})();
+
+cargar(); setInterval(cargar,60000);
+</script>
+</body>
+</html>
