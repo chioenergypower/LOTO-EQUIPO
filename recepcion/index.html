@@ -144,7 +144,7 @@ function pintar(){
     Object.keys(ed).forEach(function(k){h+='<div class="mut" style="margin:10px 0 4px;font-weight:600">'+esc(k)+'</div><div class="grid">'+ed[k].map(pisoHTML).join("")+'</div>'});
   }
   if(tab==="manana"){
-    h+='<h2>🟢 Llegan mañana</h2>'+(D.llegadas_manana.length?D.llegadas_manana.map(function(x){return '<div class="card"><b>'+esc(x.apartamento)+'</b> · '+x.noches+' noche(s) · hora: '+(x.hora?esc(x.hora):'<span style="color:var(--warn)">sin hora — pregúntala</span>')+'</div>'}).join(""):'<div class="mut">Nadie</div>');
+    h+='<h2>🟢 Llegan mañana</h2>'+(D.llegadas_manana.length?D.llegadas_manana.map(function(x){return '<div class="card"><b>'+esc(x.apartamento)+'</b> · '+x.noches+' noche(s) · hora: '+(x.hora?esc(x.hora):'<span style="color:var(--warn)">⏳ Claude se la está preguntando al cliente</span>')+'</div>'}).join(""):'<div class="mut">Nadie</div>');
     h+='<h2>🟠 Salen mañana</h2>'+(D.salidas_manana.length?'<div class="card">'+D.salidas_manana.map(function(x){return esc(x.apartamento)}).join(" · ")+'</div>':'<div class="mut">Nadie</div>');
   }
   if(tab==="traspaso"){
