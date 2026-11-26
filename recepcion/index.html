@@ -136,7 +136,7 @@ function pintar(){
   if(tab==="hoy"){
     var c={}; D.pisos.forEach(function(p){c[p.estado]=(c[p.estado]||0)+1});
     var lleg=D.pisos.filter(function(p){return p.llega}), sal=D.pisos.filter(function(p){return p.sale});
-    h+='<div class="kpis"><div class="kpi"><b>'+lleg.length+'</b><span>Entradas hoy</span></div><div class="kpi"><b>'+sal.length+'</b><span>Salidas hoy</span></div><div class="kpi"><b>'+(c.ocupado||0)+'</b><span>Ocupados</span></div><div class="kpi"><b>'+((c.por_limpiar||0)+(c.limpiando||0))+'</b><span>Por limpiar / limpiando</span></div><div class="kpi"><b>'+(c.libre||0)+'</b><span>Libres</span></div></div>';
+    h+='<div class="kpis"><div class="kpi"><b>'+lleg.length+'</b><span>Entradas hoy</span></div><div class="kpi"><b>'+sal.length+'</b><span>Salidas hoy</span></div><div class="kpi"><b>'+(c.ocupado||0)+'</b><span>Ocupados</span></div><div class="kpi"><b>'+((c.por_limpiar||0)+(c.limpiando||0))+'</b><span>Por limpiar / limpiando</span></div><div class="kpi"><b>'+(c.libre||0)+'</b><span>Libres</span></div><div class="kpi"><b>'+(c.bloqueado||0)+'</b><span>Cerrados / bloqueados</span></div><div class="kpi"><b>'+D.pisos.length+'</b><span>Total alojamientos</span></div></div>';
     h+='<h2>🟢 Entradas de hoy</h2>'+(lleg.length?'<div class="grid">'+lleg.map(pisoHTML).join("")+'</div>':'<div class="mut">Ninguna</div>');
     h+='<h2>🟠 Salidas de hoy</h2>'+(sal.length?'<div class="grid">'+sal.map(pisoHTML).join("")+'</div>':'<div class="mut">Ninguna</div>');
     var ed={}; D.pisos.forEach(function(p){(ed[p.edificio||"Otros"]=ed[p.edificio||"Otros"]||[]).push(p)});
