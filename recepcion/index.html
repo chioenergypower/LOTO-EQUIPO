@@ -147,6 +147,18 @@ function pintar(){
     h+=D.notas.map(function(n){return '<div class="card" style="'+(n.hecho?'opacity:.55':'')+'"><div class="row" style="justify-content:space-between"><b>'+(n.importante?'🔴 ':'')+esc(n.de)+(n.apartamento?' · '+esc(n.apartamento):'')+'</b><span class="mut">'+fmt(n.ts)+' '+hora(n.ts)+'</span></div><div style="white-space:pre-wrap;margin:6px 0">'+esc(n.texto)+'</div>'+(n.hecho?'<span class="mut">✔ Hecho por '+esc(n.hecho_por)+'</span>':'<button class="btn s" onclick="notaHecha('+n.id+')">✔ Hecho</button>')+'</div>'}).join("")||'<div class="mut">Sin notas</div>';
   }
   if(tab==="reservas"){
+    h+='<details class="card" open><summary><b>📘 Cómo se cierra una reserva (paso a paso)</b></summary><ol style="padding-left:20px;margin:8px 0">'+
+      '<li><b>Escucha al cliente</b>: fechas de llegada y salida, cuántas personas (adultos, niños, bebés) y si trae perro.</li>'+
+      '<li><b>Busca</b> aquí abajo o pregunta a la burbuja 💬 («¿qué hay libre del … al … para …?»). Salen primero los pisos propios de Loto.</li>'+
+      '<li><b>Da el precio TOTAL</b> = noches + limpieza. Si pone «falta precio de limpieza» o «sin tarifa», confírmalo en ICNEA antes de decirlo.</li>'+
+      '<li>🔴 <b>Nunca más personas que las plazas</b> que indica cada piso.</li>'+
+      '<li>🟠 <b>Más de 7 noches</b>: el precio lo valida Chio antes de cerrar. Foto de Booking con precio: puedes hacer un 10 % menos sobre ese total.</li>'+
+      '<li><b>Cuando el cliente acepte, pide</b>: nombre y apellidos, <b>email</b> 🔴 (sin email no hay reserva), teléfono y nº de personas. <b>Nunca el DNI.</b></li>'+
+      '<li><b>Rellena «Cerrar reserva»</b> y pulsa ✅. El piso queda <b>bloqueado al instante</b> y la reserva aparece como ⏳ «Pendiente de crear en ICNEA».</li>'+
+      '<li><b>Dile al cliente</b>: «Su reserva está hecha. En unos minutos recibirá un correo con la confirmación y, antes de llegar, las instrucciones de acceso».</li>'+
+      '<li><b>Comprueba</b> en la lista de abajo que pasa a ✔ «Creada en ICNEA» (en menos de 15 min). Si sigue pendiente después de 30 min, avisa a Chio.</li>'+
+      '<li>🟠 <b>Si el cliente llega HOY</b>: escríbele tú las instrucciones de llegada completas (ningún programa se las manda a tiempo) y avisa a limpieza.</li>'+
+      '</ol><div class="mut">Cambios, cancelaciones, reembolsos o descuentos fuera de estas reglas: no prometas nada, di que lo consultas y deja nota a Chio.</div></details>';
     h+='<div class="card"><b>Buscar disponibilidad</b><div class="f2"><div><label>Llegada</label><input type="date" id="d1"></div><div><label>Salida</label><input type="date" id="d2"></div></div><label>Personas (adultos + niños)</label><input type="number" id="dp" min="1" value="2"><div style="margin-top:8px"><button class="btn" onclick="buscar()">Buscar</button></div><div id="res"></div></div>';
     h+='<div class="card" id="fr"><b>Cerrar reserva</b><div class="mut">🔴 Sin email no hay reserva · nunca pedir DNI · más de 7 noches: precio de Chio</div>'+formReserva({})+'</div>';
     h+='<h2>Reservas cerradas desde recepción</h2>'+(D.reservas.map(function(r){return '<div class="card"><b>'+esc(r.apartamento)+'</b> · '+fmt(r.llegada)+' → '+fmt(r.salida)+' · '+esc(r.nombre)+' · '+r.precio_total+' €<br><span class="tag '+(r.estado==="creada"?"s-limpio":r.estado==="error"?"s-por_limpiar":"s-limpiando")+'">'+(r.estado==="pendiente"?"⏳ Pendiente de crear en ICNEA":r.estado==="creada"?"✔ Creada en ICNEA":esc(r.estado))+'</span> <span class="mut">por '+esc(r.creado_por)+'</span>'+(r.error?'<div class="mut">'+esc(r.error)+'</div>':'')+'</div>'}).join("")||'<div class="mut">Ninguna</div>');
@@ -185,7 +197,7 @@ async function buscar(){
   try{
     var d=await rpc("rec_disponibles",{p_desde:document.getElementById("d1").value,p_hasta:document.getElementById("d2").value,p_personas:+document.getElementById("dp").value});
     d.sort(function(a,b){return (b.propio-a.propio)});
-    r.innerHTML=d.length?d.map(function(x){return '<div class="li"><div><b>'+esc(x.apartamento)+'</b> '+(x.propio?'<span class="tag s-limpio">propio</span>':'')+' <span class="mut">'+esc(x.edificio||"")+' · '+x.plazas+' plazas'+(x.categoria?' · '+esc(x.categoria):'')+'</span></div><div>'+(x.precio_total!=null?'<b>'+x.precio_total+' €</b>':'<span class="mut">precio: ICNEA/Chio</span>')+'</div></div>'}).join(""):'<div class="mut">Nada libre con esas plazas.</div>';
+    r.innerHTML=d.length?d.map(function(x){return '<div class="li"><div><b>'+esc(x.apartamento)+'</b> '+(x.propio?'<span class="tag s-limpio">propio</span>':'')+' <span class="mut">'+esc(x.edificio||"")+' · '+x.plazas+' plazas'+(x.categoria?' · '+esc(x.categoria):'')+'</span></div><div>'+(x.precio_total!=null?'<b>'+x.precio_total+' €</b><div class="mut">'+x.precio_noches+' € noches + '+x.limpieza+' € limpieza</div>':(x.precio_noches!=null?'<b>'+x.precio_noches+' € + limpieza</b><div class="mut" style="color:var(--warn)">'+esc(x.aviso_precio||'')+'</div>':'<span class="mut">precio: ICNEA/Chio</span>'))+(x.cumple_minimo===false?'<div class="mut" style="color:var(--bad)">Mínimo '+x.estancia_minima+' noches</div>':'')+'</div></div>'}).join(""):'<div class="mut">Nada libre con esas plazas.</div>';
   }catch(e){ r.innerHTML='<div class="alert b">'+esc(msgErr(e))+'</div>'; }
 }
 async function nuevaNota(){try{await rpc("rec_nota",{p_texto:document.getElementById("nt").value,p_apartamento:document.getElementById("na").value,p_para:null,p_importante:document.getElementById("ni").checked});cargar()}catch(e){alert2(document.getElementById("app"),msgErr(e))}}
