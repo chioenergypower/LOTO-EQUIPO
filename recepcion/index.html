@@ -127,7 +127,9 @@ function pintar(){
   var vieja=D.ultima_sync&&(Date.now()-new Date(D.ultima_sync))>864e5;
   if(vieja) h+='<div class="alert w">⚠️ Los datos de ICNEA no se han actualizado desde '+fmt(D.ultima_sync)+'. Antes de cerrar una reserva, confírmala en ICNEA.</div>';
   var pend=D.notas.filter(function(n){return !n.hecho});
-  if(tab!=="traspaso"&&pend.length) h+='<div class="alert i">📌 Tienes '+pend.length+' nota(s) de traspaso pendientes. <a href="#" onclick="ir(\'traspaso\');return false">Ver</a></div>';
+  var urg=pend.filter(function(n){return n.importante});
+  if(urg.length) h+='<div class="alert w"><b>🔴 Tareas importantes pendientes ('+urg.length+')</b>'+urg.map(function(n){return '<div style="margin-top:6px;white-space:pre-wrap">• '+(n.apartamento?'<b>'+esc(n.apartamento)+':</b> ':'')+esc(n.texto)+' <button class="btn s" onclick="notaHecha('+n.id+')">✔ Hecho</button></div>'}).join("")+'</div>';
+  if(tab!=="traspaso"&&pend.length>urg.length) h+='<div class="alert i">📌 Tienes '+(pend.length-urg.length)+' nota(s) de traspaso pendientes. <a href="#" onclick="ir(\'traspaso\');return false">Ver</a></div>';
   if(tab==="hoy"){
     var c={}; D.pisos.forEach(function(p){c[p.estado]=(c[p.estado]||0)+1});
     var lleg=D.pisos.filter(function(p){return p.llega}), sal=D.pisos.filter(function(p){return p.sale});
@@ -144,7 +146,10 @@ function pintar(){
   }
   if(tab==="traspaso"){
     h+='<div class="card"><b>Nueva nota para el otro recepcionista</b><textarea id="nt" rows="3" placeholder="Ej.: Cliente de Iris llega a las 22:00, ya tiene instrucciones. Llamar mañana a…"></textarea><div class="f2"><div><label>Apartamento (opcional)</label><input id="na"></div><div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--fg)"><input type="checkbox" id="ni" style="width:auto"> 🔴 Importante</label></div></div><div style="margin-top:8px"><button class="btn" onclick="nuevaNota()">Guardar nota</button></div></div>';
-    h+=D.notas.map(function(n){return '<div class="card" style="'+(n.hecho?'opacity:.55':'')+'"><div class="row" style="justify-content:space-between"><b>'+(n.importante?'🔴 ':'')+esc(n.de)+(n.apartamento?' · '+esc(n.apartamento):'')+'</b><span class="mut">'+fmt(n.ts)+' '+hora(n.ts)+'</span></div><div style="white-space:pre-wrap;margin:6px 0">'+esc(n.texto)+'</div>'+(n.hecho?'<span class="mut">✔ Hecho por '+esc(n.hecho_por)+'</span>':'<button class="btn s" onclick="notaHecha('+n.id+')">✔ Hecho</button>')+'</div>'}).join("")||'<div class="mut">Sin notas</div>';
+    var notaH=function(n){return '<div class="card" style="'+(n.hecho?'opacity:.55;text-decoration:line-through':'')+'"><div class="row" style="justify-content:space-between"><b>'+(n.importante?'🔴 ':'')+esc(n.de)+(n.apartamento?' · '+esc(n.apartamento):'')+'</b><span class="mut">'+fmt(n.ts)+' '+hora(n.ts)+'</span></div><div style="white-space:pre-wrap;margin:6px 0">'+esc(n.texto)+'</div>'+(n.hecho?'<span class="mut">✔ Hecho por '+esc(n.hecho_por)+'</span>':'<button class="btn s" onclick="notaHecha('+n.id+')">✔ Hecho</button>')+'</div>'};
+    var hechas=D.notas.filter(function(n){return n.hecho});
+    h+='<h2>📌 Pendientes</h2>'+(pend.map(notaH).join("")||'<div class="mut">Nada pendiente 🎉</div>');
+    if(hechas.length) h+='<details><summary class="mut" style="margin:12px 0">✔ Hechas ('+hechas.length+')</summary>'+hechas.map(notaH).join("")+'</details>';
   }
   if(tab==="reservas"){
     h+='<details class="card" open><summary><b>📘 Cómo se cierra una reserva (paso a paso)</b></summary><ol style="padding-left:20px;margin:8px 0">'+
