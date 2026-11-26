@@ -42,6 +42,7 @@ const tools = [
   { name: "pedir_factura", description: "El recepcionista pide una factura para un cliente. Crea la tarea para que Claude (recepción automática) la haga en Holded y se la envíe al cliente.", input_schema: { type: "object", properties: { cliente: { type: "string" }, reserva: { type: "string", description: "nº de reserva ICNEA o apartamento y fechas" }, datos_fiscales: { type: "string", description: "nombre/razón social, NIF/CIF, dirección, email (si los tiene)" }, notas: { type: "string" } }, required: ["cliente", "reserva"] } },
   { name: "consultar_a_chio", description: "Cuando no sabes algo, o el recepcionista tampoco lo sabe, deja la pregunta apuntada para Chio y Claude.", input_schema: { type: "object", properties: { pregunta: { type: "string" }, apartamento: { type: "string" } }, required: ["pregunta"] } },
   { name: "avisar_equipo", description: "Cuando el recepcionista pide hablar con Chio o con alguien del equipo (Yudi, Julieta, José Matador, Sete, Santi), o pide pasarle un recado: deja el mensaje para que Claude se lo mande por WhatsApp. Escribe el mensaje ya redactado, claro y completo, como lo leerá esa persona.", input_schema: { type: "object", properties: { para: { type: "string", enum: ["Chio", "Yudi", "Julieta", "José Matador", "Sete", "Santi"] }, mensaje: { type: "string" }, apartamento: { type: "string" }, urgente: { type: "boolean" } }, required: ["para", "mensaje"] } },
+  { name: "cambiar_reserva", description: "Cuando un cliente cambia algo de una reserva ya hecha (vienen más o menos personas, cambia fechas, cambia nombre/email/teléfono): apunta el cambio para que Claude lo haga en ICNEA al momento (número de huéspedes para el registro, disponibilidad).", input_schema: { type: "object", properties: { cliente: { type: "string" }, apartamento: { type: "string" }, reserva: { type: "string", description: "nº ICNEA o fechas" }, cambio: { type: "string", description: "qué cambia exactamente, p. ej. 'de 4 a 3 adultos'" } }, required: ["cliente", "cambio"] } },
   { name: "nota_traspaso", description: "Deja una nota para el otro recepcionista (traspaso de turno).", input_schema: { type: "object", properties: { texto: { type: "string" }, apartamento: { type: "string" }, importante: { type: "boolean" } }, required: ["texto"] } },
 ];
 
@@ -124,6 +125,11 @@ async function runTool(name: string, i: any, k: string, propuestas: any[]) {
       await rest(`rec_notas?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tipo: "whatsapp" }) });
       return { ok: true, aviso: `Mensaje apuntado. Claude se lo envía por WhatsApp a ${i.para} en 1-2 minutos y lo marcará como enviado en Traspaso.` };
     }
+    case "cambiar_reserva": {
+      const id = await rpc("rec_nota", { p_k: k, p_texto: `✏️ CAMBIO EN RESERVA · ${i.cliente}${i.reserva ? " · " + i.reserva : ""}: ${i.cambio}`, p_apartamento: i.apartamento ?? null, p_para: "Claude", p_importante: true });
+      await rest(`rec_notas?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tipo: "cambio" }) });
+      return { ok: true, aviso: "Cambio apuntado: Claude lo hace en ICNEA en 1-2 minutos y lo marca como hecho en Traspaso." };
+    }
     case "nota_traspaso": {
       const n = await rpc("rec_nota", { p_k: k, p_texto: i.texto, p_apartamento: i.apartamento ?? null, p_para: null, p_importante: !!i.importante });
       return { ok: true, nota: n };
@@ -152,7 +158,7 @@ Reglas que no se rompen:
 - Si no lo sabes, NO inventes: pregunta al recepcionista, y si tampoco lo sabe, usa consultar_a_chio.
 - Si piden hablar con Chio o con alguien del equipo, o pasarle un recado («dile a Chio…», «dile a Yudi…»), usa avisar_equipo con el mensaje ya redactado y muestra en tu respuesta el texto exacto que se va a enviar y a quién. No preguntes si quiere añadir algo: envíalo con lo que haya dicho.
 - Wifi / internet: busca SIEMPRE en buscar_conocimiento con «wifi». Muchos pisos reciben el wifi del router de otro piso (p. ej. Sol ← Luna); explica de qué piso viene el router y que, si hay que tocarlo, hay que coordinarlo con el cliente de ese piso. Las claves wifi sí se pueden dar; si no las tienes registradas, di que están en las instrucciones de llegada del piso en ICNEA o pídeselas a Claude con avisar_equipo.
-- Si piden una factura para un cliente, recoge cliente, reserva y datos fiscales que tengan y usa pedir_factura.
+- Si el recepcionista dice que un cliente cambia algo de su reserva (más o menos personas, fechas, datos), usa cambiar_reserva al momento. Si son más personas, comprueba antes con ficha_apartamento que caben (Junta; pisos de Loto +1 de palabra) y, si cambian fechas, mira disponibilidad.\n- Si piden una factura para un cliente, recoge cliente, reserva y datos fiscales que tengan y usa pedir_factura.
 - Cuando el recepcionista diga que ha cerrado con el cliente, usa proponer_reserva con todos los datos que tengas; la reserva se crea al pulsar el botón.`;
 
 Deno.serve(async (req) => {
