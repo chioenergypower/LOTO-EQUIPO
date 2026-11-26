@@ -40,7 +40,7 @@ const tools = [
   { name: "buscar_documentos", description: "Busca en las hojas de ruta, la chuleta de recepción, los procedimientos (cerrar reserva, pagos Santander, reubicaciones, limpieza, IVA…) y el conocimiento por apartamento. Úsalo para cualquier '¿cómo hago…?'.", input_schema: { type: "object", properties: { texto: { type: "string", description: "1-2 palabras clave, p. ej. 'factura', 'pago', 'reubicar'" } }, required: ["texto"] } },
   { name: "guardar_conocimiento", description: "Guarda en la base lo que el recepcionista enseña o corrige («esto no es así, es de esta manera»). Úsalo SIEMPRE que te corrijan o te den un dato nuevo, después de confirmarlo con él.", input_schema: { type: "object", properties: { tema: { type: "string" }, pregunta: { type: "string", description: "situación o pregunta tipo" }, respuesta_correcta: { type: "string" }, apartamento: { type: "string" } }, required: ["tema", "respuesta_correcta"] } },
   { name: "pedir_factura", description: "El recepcionista pide una factura para un cliente. Crea la tarea para que Claude (recepción automática) la haga en Holded y se la envíe al cliente.", input_schema: { type: "object", properties: { cliente: { type: "string" }, reserva: { type: "string", description: "nº de reserva ICNEA o apartamento y fechas" }, datos_fiscales: { type: "string", description: "nombre/razón social, NIF/CIF, dirección, email (si los tiene)" }, notas: { type: "string" } }, required: ["cliente", "reserva"] } },
-  { name: "consultar_a_chio", description: "Cuando no sabes algo, o es una decisión de Chio (reembolsos, excepciones, precios >7 noches), deja la pregunta apuntada para Chio y Claude.", input_schema: { type: "object", properties: { pregunta: { type: "string" }, apartamento: { type: "string" } }, required: ["pregunta"] } },
+  { name: "consultar_a_chio", description: "Cuando no sabes algo, o el recepcionista tampoco lo sabe, deja la pregunta apuntada para Chio y Claude.", input_schema: { type: "object", properties: { pregunta: { type: "string" }, apartamento: { type: "string" } }, required: ["pregunta"] } },
   { name: "nota_traspaso", description: "Deja una nota para el otro recepcionista (traspaso de turno).", input_schema: { type: "object", properties: { texto: { type: "string" }, apartamento: { type: "string" }, importante: { type: "boolean" } }, required: ["texto"] } },
 ];
 
@@ -124,10 +124,10 @@ Usa SIEMPRE las herramientas antes de afirmar algo sobre un apartamento, disponi
 Reglas que no se rompen:
 - Nunca ofrecer más personas que las plazas de la Junta (plazas_junta). Bebés aparte solo si Chio lo ha validado.
 - Al ofrecer pisos libres: primero los propios de Loto, luego 1ª/2ª/LUX, y los de 3ª (Blessed, Sunny, Terralta, Queen) solo si no queda otra. Da siempre el precio total si está; si no hay tarifa cargada, dilo («precio: consultar a Chio/ICNEA»).
-- Precios de más de 7 noches: los cierra Chio. Hasta 7 noches el recepcionista decide. Foto de Booking con precio → 10 % de descuento sobre ese total si reserva directo.
+- Precios (también de más de 7 noches), excepciones y reembolsos: los decide el recepcionista (Sete/Santi) con su criterio; ayúdale con los datos. Foto de Booking con precio → 10 % de descuento sobre ese total si reserva directo.
 - Para cerrar reserva se pide: nombre completo, email, teléfono y número de huéspedes. NUNCA el DNI. Sin email no hay reserva.
 - Check-in 17:00, check-out 11:00. Entrada antes / salida tarde sin coste según limpieza del día.
-- Cancelaciones fuera de 30 días: primero NO. Reembolsos, compensaciones y excepciones: los decide Chio.
+- Cancelaciones fuera de 30 días: primero NO. Reembolsos, compensaciones y excepciones: los decide el recepcionista.
 - Recomendar siempre cadenas; nosotros no salimos a ayudar en carretera. «Cerca de la plaza» = solo Atlas.
 - Nunca des códigos de cajetín, wifi, parking, teléfonos del equipo, IBAN ni nada de propietarios.
 - La disponibilidad sale de la última sincronización con ICNEA; si es antigua (más de 1 día) avísalo y que confirmen en ICNEA antes de cerrar.
