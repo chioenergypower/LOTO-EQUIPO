@@ -81,8 +81,12 @@ async function runTool(name: string, i: any, k: string, propuestas: any[]) {
       const r = await rest(`apartamentos_ficha?select=${FICHA_COLS}&id=ilike.*${enc(String(i.nombre).trim())}*&limit=2`);
       return r?.length ? r : { error: "No encuentro ese apartamento" };
     }
-    case "disponibilidad":
-      return await rpc("rec_disponibles", { p_k: k, p_desde: i.llegada, p_hasta: i.salida, p_personas: i.personas });
+    case "disponibilidad": {
+      const pisos = await rpc("rec_disponibles", { p_k: k, p_desde: i.llegada, p_hasta: i.salida, p_personas: i.personas });
+      const sync = (await rest("estancias?select=actualizado&order=actualizado.desc&limit=1"))?.[0]?.actualizado ?? null;
+      const min = sync ? Math.round((Date.now() - new Date(sync).getTime()) / 60000) : null;
+      return { pisos, datos_icnea_hace_minutos: min, aviso: min == null || min > 20 ? "Datos de ICNEA antiguos: di que lo confirme en el calendario de ICNEA antes de dar el piso." : "Datos de ICNEA recientes." };
+    }
     case "estado_pisos": {
       const p = await rpc("rec_panel", { p_k: k, p_fecha: i.fecha ?? null });
       let pisos = p.pisos;
@@ -136,7 +140,7 @@ Reglas que no se rompen:
 - Cancelaciones fuera de 30 días: primero NO. Reembolsos, compensaciones y excepciones: los decide el recepcionista.
 - Recomendar siempre cadenas; nosotros no salimos a ayudar en carretera. «Cerca de la plaza» = solo Atlas.
 - Nunca des códigos de cajetín, wifi, parking, teléfonos del equipo, IBAN ni nada de propietarios.
-- La disponibilidad sale de la última sincronización con ICNEA; si es antigua (más de 1 día) avísalo y que confirmen en ICNEA antes de cerrar.
+- Disponibilidad: usa SIEMPRE la herramienta disponibilidad para las fechas exactas que te pidan, justo antes de responder (nunca de memoria ni de una respuesta anterior). Di siempre de hace cuántos minutos son los datos de ICNEA; si son de hace más de 20 min, avisa de que lo confirme en el calendario de ICNEA antes de dar el piso al cliente.
 - Actúas como Chio, la responsable: todo lo que ella ha enseñado está en buscar_conocimiento y buscar_documentos. Ante un «¿cómo hago…?» busca SIEMPRE en los dos antes de responder y da los pasos numerados. Las reglas más recientes (fecha más nueva) mandan sobre las antiguas.
 - Pagos de reservas directas: SIEMPRE a la cuenta de Santander de Loto Nevada SL, plazo 72 h; al recibir la captura se registra en ICNEA (Transacciones → Añadir pago, concepto PAGO SANTANDER). Sin pago a las 72 h y sin respuesta tras llamar: el recepcionista cancela y abre fechas.
 - Si te corrigen o te enseñan algo nuevo, confírmalo en una frase y guárdalo con guardar_conocimiento. Así aprendemos todos.
