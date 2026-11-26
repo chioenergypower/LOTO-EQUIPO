@@ -37,6 +37,10 @@ const tools = [
   { name: "parte_nieve_carretera", description: "Información actual de Sierra Nevada (pistas, remontes, nieve) y enlaces de carretera DGT/AEMET.", input_schema: { type: "object", properties: {} } },
   { name: "proponer_reserva", description: "Cuando el recepcionista ya ha cerrado con el cliente, prepara la ficha de reserva para que la confirme con un botón. No crea nada por sí sola.", input_schema: { type: "object", properties: { apartamento: { type: "string" }, llegada: { type: "string" }, salida: { type: "string" }, adultos: { type: "integer" }, ninos: { type: "integer" }, bebes: { type: "integer" }, nombre: { type: "string" }, apellidos: { type: "string" }, email: { type: "string" }, telefono: { type: "string" }, precio_total: { type: "number" }, notas: { type: "string" } }, required: ["apartamento", "llegada", "salida", "precio_total"] } },
   { name: "crear_parte", description: "Crea un parte de mantenimiento (avería) asignado a José Matador.", input_schema: { type: "object", properties: { apartamento: { type: "string" }, descripcion: { type: "string" }, urgente: { type: "boolean" } }, required: ["apartamento", "descripcion"] } },
+  { name: "buscar_documentos", description: "Busca en las hojas de ruta, la chuleta de recepción, los procedimientos (cerrar reserva, pagos Santander, reubicaciones, limpieza, IVA…) y el conocimiento por apartamento. Úsalo para cualquier '¿cómo hago…?'.", input_schema: { type: "object", properties: { texto: { type: "string", description: "1-2 palabras clave, p. ej. 'factura', 'pago', 'reubicar'" } }, required: ["texto"] } },
+  { name: "guardar_conocimiento", description: "Guarda en la base lo que el recepcionista enseña o corrige («esto no es así, es de esta manera»). Úsalo SIEMPRE que te corrijan o te den un dato nuevo, después de confirmarlo con él.", input_schema: { type: "object", properties: { tema: { type: "string" }, pregunta: { type: "string", description: "situación o pregunta tipo" }, respuesta_correcta: { type: "string" }, apartamento: { type: "string" } }, required: ["tema", "respuesta_correcta"] } },
+  { name: "pedir_factura", description: "El recepcionista pide una factura para un cliente. Crea la tarea para que Claude (recepción automática) la haga en Holded y se la envíe al cliente.", input_schema: { type: "object", properties: { cliente: { type: "string" }, reserva: { type: "string", description: "nº de reserva ICNEA o apartamento y fechas" }, datos_fiscales: { type: "string", description: "nombre/razón social, NIF/CIF, dirección, email (si los tiene)" }, notas: { type: "string" } }, required: ["cliente", "reserva"] } },
+  { name: "consultar_a_chio", description: "Cuando no sabes algo, o es una decisión de Chio (reembolsos, excepciones, precios >7 noches), deja la pregunta apuntada para Chio y Claude.", input_schema: { type: "object", properties: { pregunta: { type: "string" }, apartamento: { type: "string" } }, required: ["pregunta"] } },
   { name: "nota_traspaso", description: "Deja una nota para el otro recepcionista (traspaso de turno).", input_schema: { type: "object", properties: { texto: { type: "string" }, apartamento: { type: "string" }, importante: { type: "boolean" } }, required: ["texto"] } },
 ];
 
@@ -53,6 +57,24 @@ async function runTool(name: string, i: any, k: string, propuestas: any[]) {
       const a = await rest(`bot_conocimiento?select=tema,pregunta_tipo,respuesta_buena,apartamento,temporada&or=${or}&limit=8`);
       const reg = await rpc("rec_reglas_buscar", { p_texto: i.texto }).catch(() => []);
       return { conocimiento: a, reglas: reg };
+    }
+    case "buscar_documentos":
+      return await rpc("rec_docs_buscar", { p_texto: String(i.texto).trim() });
+    case "guardar_conocimiento": {
+      const yo = (await rest(`equipo?select=nombre&clave=eq.${enc(k)}&limit=1`))?.[0]?.nombre ?? "Recepción";
+      const f = new Date().toLocaleString("es-ES", { timeZone: "Europe/Madrid", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+      await rest("bot_conocimiento", { method: "POST", body: JSON.stringify({ tema: i.tema, pregunta_tipo: i.pregunta ?? null, respuesta_buena: i.respuesta_correcta, apartamento: i.apartamento ?? null, origen: `${yo} ${f}`, notas: "Enseñado desde la app de recepción" }) });
+      return { ok: true };
+    }
+    case "pedir_factura": {
+      const id = await rpc("rec_nota", { p_k: k, p_texto: `🧾 FACTURA para ${i.cliente} · ${i.reserva}${i.datos_fiscales ? "\nDatos: " + i.datos_fiscales : ""}${i.notas ? "\n" + i.notas : ""}`, p_apartamento: null, p_para: "Claude", p_importante: true });
+      await rest(`rec_notas?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tipo: "factura" }) });
+      return { ok: true, aviso: "Tarea creada: Claude hará la factura en Holded en su próxima revisión (máx. 15 min)." };
+    }
+    case "consultar_a_chio": {
+      const id = await rpc("rec_nota", { p_k: k, p_texto: `❓ ${i.pregunta}`, p_apartamento: i.apartamento ?? null, p_para: "Chio", p_importante: true });
+      await rest(`rec_notas?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tipo: "consulta" }) });
+      return { ok: true };
     }
     case "ficha_apartamento": {
       const r = await rest(`apartamentos_ficha?select=${FICHA_COLS}&id=ilike.*${enc(String(i.nombre).trim())}*&limit=2`);
@@ -109,6 +131,11 @@ Reglas que no se rompen:
 - Recomendar siempre cadenas; nosotros no salimos a ayudar en carretera. «Cerca de la plaza» = solo Atlas.
 - Nunca des códigos de cajetín, wifi, parking, teléfonos del equipo, IBAN ni nada de propietarios.
 - La disponibilidad sale de la última sincronización con ICNEA; si es antigua (más de 1 día) avísalo y que confirmen en ICNEA antes de cerrar.
+- Actúas como Chio, la responsable: todo lo que ella ha enseñado está en buscar_conocimiento y buscar_documentos. Ante un «¿cómo hago…?» busca SIEMPRE en los dos antes de responder y da los pasos numerados. Las reglas más recientes (fecha más nueva) mandan sobre las antiguas.
+- Pagos de reservas directas: SIEMPRE a la cuenta de Santander de Loto Nevada SL, plazo 72 h; al recibir la captura se registra en ICNEA (Transacciones → Añadir pago, concepto PAGO SANTANDER). Sin pago a las 72 h y sin respuesta tras llamar: el recepcionista cancela y abre fechas.
+- Si te corrigen o te enseñan algo nuevo, confírmalo en una frase y guárdalo con guardar_conocimiento. Así aprendemos todos.
+- Si no lo sabes, NO inventes: pregunta al recepcionista, y si tampoco lo sabe, usa consultar_a_chio.
+- Si piden una factura para un cliente, recoge cliente, reserva y datos fiscales que tengan y usa pedir_factura.
 - Cuando el recepcionista diga que ha cerrado con el cliente, usa proponer_reserva con todos los datos que tengas; la reserva se crea al pulsar el botón.`;
 
 Deno.serve(async (req) => {
