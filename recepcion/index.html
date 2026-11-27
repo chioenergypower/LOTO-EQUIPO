@@ -127,8 +127,31 @@ function pisoHTML(p){
   if(l&&l.inicio&&!l.fin) extra.push("limpieza desde "+hora(l.inicio));
   if(l&&l.fin) extra.push("limpio a las "+hora(l.fin));
   if(p.partes_abiertos) extra.push("🔧 "+p.partes_abiertos+" parte(s)");
-  return '<div class="piso"><div class="n">'+esc(p.apartamento)+'</div><div class="e">'+esc(p.edificio||"")+'</div><span class="tag s-'+p.estado+'">'+NOMBRES[p.estado]+'</span>'+(extra.length?'<div class="mut">'+esc(extra.join(" · "))+'</div>':"")+(l&&l.nota?'<div class="mut">📝 '+esc(l.nota)+'</div>':"")+'</div>';
+  return '<div class="piso"><div class="n">'+esc(p.apartamento)+'</div><div class="e">'+esc(p.edificio||"")+'</div><span class="tag s-'+p.estado+'">'+NOMBRES[p.estado]+'</span>'+(extra.length?'<div class="mut">'+esc(extra.join(" · "))+'</div>':"")+'</div>';
 }
+var EDC={"Alpes 1":"P1","Alpes 2":"P2","Alpes 3":"P3"};
+function fichaHoy(p,entra){
+  var l=p.limpieza, est=[];
+  if(entra) est.push("entra hoy"+(p.hora_llegada?" · "+p.hora_llegada:""));
+  else est.push("sale hoy"+(l&&l.hora_salida?" · "+l.hora_salida:""));
+  if(l&&l.inicio&&!l.fin) est.push("limpiando desde "+hora(l.inicio));
+  if(l&&l.fin) est.push("limpio "+hora(l.fin));
+  var dat='<div class="row" style="flex-wrap:wrap;gap:6px 14px;margin:6px 0">'+
+    '<span>🏢 <b>'+esc((EDC[p.edificio]?EDC[p.edificio]+" · ":"")+(p.edificio||""))+'</b></span>'+
+    '<span>Planta <b>'+esc(p.planta||"?")+'</b> · Puerta <b>'+esc(p.puerta||"?")+'</b></span>'+
+    '<span>🅿️ <b>'+esc(p.parking||"—")+'</b></span>'+
+    '<span>🔑 <b>'+(p.cajetin?'cajetín nº '+esc(p.cajetin)+' · ':'')+esc(p.codigo||"—")+'</b></span>'+
+    (p.plazas?'<span>👥 '+p.plazas+' plazas</span>':'')+'</div>'+
+    (p.wifi?'<div class="mut">'+esc(p.wifi)+'</div>':'');
+  var ins='';
+  if(entra&&p.instrucciones){
+    var txt=p.instrucciones+"\n\n🏢 Edificio "+(p.edificio||"")+" · Planta "+(p.planta||"")+" · Puerta "+(p.puerta||"")+"\n🅿️ Parking: "+(p.parking||"—")+"\n🔑 "+(p.cajetin?"Cajetín nº "+p.cajetin+" · ":"")+"Código: "+(p.codigo||"")+(p.wifi?"\n"+p.wifi:"")+"\n🕔 Check-in desde las 17:00 · Check-out hasta las 11:00";
+    ins='<details style="margin-top:6px"><summary><b>📋 Instrucciones de llegada (para copiar y reenviar)</b></summary><textarea readonly rows="12" id="ins_'+esc(p.apartamento)+'" style="width:100%;margin-top:6px">'+esc(txt)+'</textarea><button class="btn s" onclick="copiarIns(\''+esc(p.apartamento)+'\')">📋 Copiar</button></details>';
+  }
+  return '<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:16px">'+esc(p.apartamento)+'</b><span class="tag s-'+p.estado+'">'+NOMBRES[p.estado]+'</span></div><div class="mut">'+esc(est.join(" · "))+'</div>'+dat+ins+'</div>';
+}
+function copiarIns(a){var t=document.getElementById("ins_"+a);try{navigator.clipboard.writeText(t.value).then(function(){alertar("Copiado ✅")},function(){t.select()})}catch(e){t.select()}}
+function alertar(m){var d=document.createElement("div");d.className="alert i";d.textContent=m;d.style.position="fixed";d.style.bottom="80px";d.style.left="16px";d.style.right="16px";d.style.zIndex=99;document.body.appendChild(d);setTimeout(function(){d.remove()},1500)}
 function pintar(){
   var a=document.getElementById("app"), h="";
   if(!D)return;
@@ -142,8 +165,8 @@ function pintar(){
     var c={}; D.pisos.forEach(function(p){c[p.estado]=(c[p.estado]||0)+1});
     var lleg=D.pisos.filter(function(p){return p.llega}), sal=D.pisos.filter(function(p){return p.sale});
     h+='<div class="kpis"><div class="kpi"><b>'+lleg.length+'</b><span>Entradas hoy</span></div><div class="kpi"><b>'+sal.length+'</b><span>Salidas hoy</span></div><div class="kpi"><b>'+(c.ocupado||0)+'</b><span>Ocupados</span></div><div class="kpi"><b>'+((c.por_limpiar||0)+(c.limpiando||0))+'</b><span>Por limpiar / limpiando</span></div><div class="kpi"><b>'+(c.libre||0)+'</b><span>Libres</span></div><div class="kpi"><b>'+(c.bloqueado||0)+'</b><span>Cerrados / bloqueados</span></div><div class="kpi"><b>'+D.pisos.length+'</b><span>Total alojamientos</span></div></div>';
-    h+='<h2>🟢 Entradas de hoy</h2>'+(lleg.length?'<div class="grid">'+lleg.map(pisoHTML).join("")+'</div>':'<div class="mut">Ninguna</div>');
-    h+='<h2>🟠 Salidas de hoy</h2>'+(sal.length?'<div class="grid">'+sal.map(pisoHTML).join("")+'</div>':'<div class="mut">Ninguna</div>');
+    h+='<h2>🟢 Entradas de hoy</h2>'+(lleg.length?lleg.map(function(p){return fichaHoy(p,true)}).join(""):'<div class="mut">Ninguna</div>');
+    h+='<h2>🟠 Salidas de hoy</h2>'+(sal.length?sal.map(function(p){return fichaHoy(p,false)}).join(""):'<div class="mut">Ninguna</div>');
     var ed={}; D.pisos.forEach(function(p){(ed[p.edificio||"Otros"]=ed[p.edificio||"Otros"]||[]).push(p)});
     h+='<h2>🏢 Estado de todos los alojamientos</h2>';
     Object.keys(ed).forEach(function(k){h+='<div class="mut" style="margin:10px 0 4px;font-weight:600">'+esc(k)+'</div><div class="grid">'+ed[k].map(pisoHTML).join("")+'</div>'});
@@ -159,7 +182,6 @@ function pintar(){
     var hechas=D.notas.filter(function(n){return n.hecho});
     h+='<h2>📌 Pendientes</h2>'+(pend.map(notaH).join("")||'<div class="mut">Nada pendiente 🎉</div>');
     h+='<details class="card" style="margin-top:16px"><summary><b>✍️ Dejar un aviso para el compañero del otro turno</b> <span class="mut">(opcional)</span></summary><div class="mut" style="margin:6px 0">Sirve para pasar información al recepcionista que entra después de ti (Sete ↔ Santi): algo que quedó pendiente, un cliente que llama mañana, etc. Las preguntas de Claude y las tareas no se escriben aquí: se contestan con su botón 💬 Responder.</div><textarea id="nt" rows="3" placeholder="Ej.: Cliente de Iris llega a las 22:00, ya tiene instrucciones. Llamar mañana a…"></textarea><div class="f2"><div><label>Apartamento (opcional)</label><input id="na"></div><div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;color:var(--fg)"><input type="checkbox" id="ni" style="width:auto"> 🔴 Importante</label></div></div><div style="margin-top:8px"><button class="btn" onclick="nuevaNota()">Guardar aviso</button></div></details>';
-    if(hechas.length) h+='<details><summary class="mut" style="margin:12px 0">✔ Hechas ('+hechas.length+')</summary>'+hechas.map(notaH).join("")+'</details>';
   }
   if(tab==="reservas"){
     h+='<details class="card" open><summary><b>📘 Cómo se cierra una reserva (paso a paso)</b></summary><ol style="padding-left:20px;margin:8px 0">'+
