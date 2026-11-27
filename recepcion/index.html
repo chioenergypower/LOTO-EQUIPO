@@ -113,7 +113,7 @@ function hora(d){return d?new Date(d).toLocaleTimeString("es-ES",{hour:"2-digit"
 function msgErr(e){return ERR[e.codigo]||e.message||"Error"}
 
 async function cargar(auto){
-  try{ D=await rpc("rec_panel",{p_fecha:null}); }
+  try{ D=await rpc("rec_panel",{p_fecha:null}); try{LLEG=await rpc("rec_llegados",{})}catch(e){LLEG={}} }
   catch(e){ document.getElementById("app").innerHTML='<div class="alert b">'+esc(msgErr(e))+'</div>'; return; }
   var vieja=D.ultima_sync&&(Date.now()-new Date(D.ultima_sync))>864e5;
   document.getElementById("sub").textContent="Hola "+D.yo.nombre+" · "+fmt(D.fecha)+" · ICNEA sincronizado "+(D.ultima_sync?fmt(D.ultima_sync)+" "+hora(D.ultima_sync):"—")+(vieja?" ⚠️":"");
@@ -129,7 +129,21 @@ function pisoHTML(p){
   if(p.partes_abiertos) extra.push("🔧 "+p.partes_abiertos+" parte(s)");
   return '<div class="piso"><div class="n">'+esc(p.apartamento)+'</div><div class="e">'+esc(p.edificio||"")+'</div><span class="tag s-'+p.estado+'">'+NOMBRES[p.estado]+'</span>'+(extra.length?'<div class="mut">'+esc(extra.join(" · "))+'</div>':"")+'</div>';
 }
-var EDC={"Alpes 1":"P1","Alpes 2":"P2","Alpes 3":"P3"};
+var LLEG={};
+function urls(t){return (t||"").match(/https?:\/\/[^\s)]+/g)||[]}
+function insLargas(p){
+  var u=urls(p.instrucciones), cruce="https://maps.app.goo.gl/XNVWL7mmaJkSmm3SA";
+  var maps=u.filter(function(x){return /maps\.app|goo\.gl\/maps|google\.[a-z]+\/maps/.test(x)&&x.indexOf("XNVWL7mmaJkSmm3SA")<0})[0]||"";
+  var video=u.filter(function(x){return /1drv\.ms|onedrive|youtu/.test(x)})[0]||"";
+  var sinObras=/Atlas|Nature/.test(p.apartamento);
+  var m1="🏔️ Os dejo TODO ordenado para llegar sin problemas al Apartamento "+p.apartamento+" (1/2):\n\n"+
+   (sinObras?"🚗 CÓMO LLEGAR\n\n📍 Ubicación del apartamento:\n"+maps+"\n":
+   "⚠️ IMPORTANTE: ahora mismo hay cortes en la carretera por obras. Google Maps se confunde y os puede mandar por un camino cerrado. Seguid estos pasos EN ORDEN:\n\n🚗 CÓMO LLEGAR\n\n1️⃣ Poned en Google Maps SOLO el cruce de entrada a la Zona Alta:\n"+cruce+"\n\n2️⃣ En ese cruce girad a la DERECHA (curva muy cerrada) y seguid RECTO.\n⛔ Todavía NO pongáis la ubicación del apartamento. Si Maps dice que deis la vuelta, no le hagáis caso.\n\n3️⃣ A los 3-5 minutos, muy atentos: a la derecha sale un desvío sin stop con el cartel ZONA ALTA. Tomadlo.\n\n4️⃣ AHORA SÍ, poned la ubicación del apartamento:\n"+maps+"\n\n💡 TRUCO: si Google Maps insiste en que deis la vuelta, pulsad «Cómo llegar» pero NO pulséis «Iniciar». Miraos en el mapa (sois el punto azul) y acercaos al punto rojo (el apartamento).");
+  var m2="🎥 EL VÍDEO Y EL ACCESO (2/2)\n\n👉 Poned el vídeo cuando estéis aparcados delante del edificio "+(p.edificio||"")+", a partir del MINUTO 3 aprox.: ahí se ve la entrada al edificio, el cajetín de las llaves y el acceso al apartamento.\n\n📹 Vídeo de acceso:\n"+video+"\n\n🏢 Edificio "+(p.edificio||"")+" · Planta "+(p.planta||"")+" · Puerta "+(p.puerta||"")+
+   "\n🅿️ Parking: "+(p.parking||"—")+"\n🔑 "+(p.cajetin?"Cajetín nº "+p.cajetin+" · ":"Cajetín · ")+"código "+(p.codigo||"")+(p.wifi?"\n"+p.wifi:"")+
+   "\n🕔 Check-in desde las 17:00 · Check-out hasta las 11:00\n\n💬 Cualquier duda en el camino, escribidnos por aquí y os guiamos en el momento.";
+  return [m1,m2];
+}
 function fichaHoy(p,entra){
   var l=p.limpieza, est=[];
   if(entra) est.push("entra hoy"+(p.hora_llegada?" · "+p.hora_llegada:""));
@@ -137,20 +151,25 @@ function fichaHoy(p,entra){
   if(l&&l.inicio&&!l.fin) est.push("limpiando desde "+hora(l.inicio));
   if(l&&l.fin) est.push("limpio "+hora(l.fin));
   var dat='<div class="row" style="flex-wrap:wrap;gap:6px 14px;margin:6px 0">'+
-    '<span>🏢 <b>'+esc((EDC[p.edificio]?EDC[p.edificio]+" · ":"")+(p.edificio||""))+'</b></span>'+
+    '<span>🏢 <b>'+esc(p.edificio||"")+'</b></span>'+
     '<span>Planta <b>'+esc(p.planta||"?")+'</b> · Puerta <b>'+esc(p.puerta||"?")+'</b></span>'+
     '<span>🅿️ <b>'+esc(p.parking||"—")+'</b></span>'+
     '<span>🔑 <b>'+(p.cajetin?'cajetín nº '+esc(p.cajetin)+' · ':'')+esc(p.codigo||"—")+'</b></span>'+
     (p.plazas?'<span>👥 '+p.plazas+' plazas</span>':'')+'</div>'+
     (p.wifi?'<div class="mut">'+esc(p.wifi)+'</div>':'');
-  var ins='';
+  var ins='', btn='', id=esc(p.apartamento).replace(/\s/g,"_");
   if(entra&&p.instrucciones){
-    var txt=p.instrucciones+"\n\n🏢 Edificio "+(p.edificio||"")+" · Planta "+(p.planta||"")+" · Puerta "+(p.puerta||"")+"\n🅿️ Parking: "+(p.parking||"—")+"\n🔑 "+(p.cajetin?"Cajetín nº "+p.cajetin+" · ":"")+"Código: "+(p.codigo||"")+(p.wifi?"\n"+p.wifi:"")+"\n🕔 Check-in desde las 17:00 · Check-out hasta las 11:00";
-    ins='<details style="margin-top:6px"><summary><b>📋 Instrucciones de llegada (para copiar y reenviar)</b></summary><textarea readonly rows="12" id="ins_'+esc(p.apartamento)+'" style="width:100%;margin-top:6px">'+esc(txt)+'</textarea><button class="btn s" onclick="copiarIns(\''+esc(p.apartamento)+'\')">📋 Copiar</button></details>';
+    var m=insLargas(p);
+    ins='<details style="margin-top:6px"><summary><b>📋 Instrucciones de llegada (para copiar y reenviar)</b></summary>'+
+      [0,1].map(function(i){return '<div class="mut" style="margin-top:6px">Mensaje '+(i+1)+'/2</div><textarea readonly rows="10" id="ins'+i+'_'+id+'" style="width:100%">'+esc(m[i])+'</textarea><button class="btn s" onclick="copiarIns(\'ins'+i+'_'+id+'\')">📋 Copiar mensaje '+(i+1)+'/2</button>'}).join("")+'</details>';
   }
-  return '<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:16px">'+esc(p.apartamento)+'</b><span class="tag s-'+p.estado+'">'+NOMBRES[p.estado]+'</span></div><div class="mut">'+esc(est.join(" · "))+'</div>'+dat+ins+'</div>';
+  if(entra) btn='<div id="cf_'+id+'" style="margin-top:8px"><button class="btn s" onclick="pedirConf(\''+id+'\')">✅ Ha llegado</button></div>';
+  return '<div class="card"><div class="row" style="justify-content:space-between"><b style="font-size:16px">'+esc(p.apartamento)+'</b><span class="tag s-'+p.estado+'">'+NOMBRES[p.estado]+'</span></div><div class="mut">'+esc(est.join(" · "))+'</div>'+dat+ins+btn+'</div>';
 }
-function copiarIns(a){var t=document.getElementById("ins_"+a);try{navigator.clipboard.writeText(t.value).then(function(){alertar("Copiado ✅")},function(){t.select()})}catch(e){t.select()}}
+function pedirConf(id){var a=id.replace(/_/g," ");document.getElementById("cf_"+id).innerHTML='<div class="alert w" style="margin:0">¿Confirmas que el cliente de <b>'+esc(a)+'</b> ya ha llegado y ha entrado? <div class="acc"><button class="btn s" onclick="marcarLlegada(\''+id+'\',false)">Sí, ha llegado</button> <button class="btn s" onclick="pintar()">No, cancelar</button></div></div>'}
+async function marcarLlegada(id,deshacer){var a=id.replace(/_/g," ");try{await rpc("rec_llegada",{p_apartamento:a,p_deshacer:!!deshacer});LLEG=await rpc("rec_llegados",{});pintar();alertar(deshacer?"Marcado como pendiente":"✅ "+a+": llegada confirmada")}catch(e){alertar(msgErr(e))}}
+function porEdificio(lista,fn){var ed={},orden=[];lista.forEach(function(p){var k=p.edificio||"Otros";if(!ed[k]){ed[k]=[];orden.push(k)}ed[k].push(p)});return orden.map(function(k){return '<div class="mut" style="margin:10px 0 4px;font-weight:700;font-size:15px">🏢 '+esc(k)+'</div>'+ed[k].map(fn).join("")}).join("")}
+function copiarIns(a){var t=document.getElementById(a);try{navigator.clipboard.writeText(t.value).then(function(){alertar("Copiado ✅")},function(){t.select()})}catch(e){t.select()}}
 function alertar(m){var d=document.createElement("div");d.className="alert i";d.textContent=m;d.style.position="fixed";d.style.bottom="80px";d.style.left="16px";d.style.right="16px";d.style.zIndex=99;document.body.appendChild(d);setTimeout(function(){d.remove()},1500)}
 function pintar(){
   var a=document.getElementById("app"), h="";
@@ -165,8 +184,10 @@ function pintar(){
     var c={}; D.pisos.forEach(function(p){c[p.estado]=(c[p.estado]||0)+1});
     var lleg=D.pisos.filter(function(p){return p.llega}), sal=D.pisos.filter(function(p){return p.sale});
     h+='<div class="kpis"><div class="kpi"><b>'+lleg.length+'</b><span>Entradas hoy</span></div><div class="kpi"><b>'+sal.length+'</b><span>Salidas hoy</span></div><div class="kpi"><b>'+(c.ocupado||0)+'</b><span>Ocupados</span></div><div class="kpi"><b>'+((c.por_limpiar||0)+(c.limpiando||0))+'</b><span>Por limpiar / limpiando</span></div><div class="kpi"><b>'+(c.libre||0)+'</b><span>Libres</span></div><div class="kpi"><b>'+(c.bloqueado||0)+'</b><span>Cerrados / bloqueados</span></div><div class="kpi"><b>'+D.pisos.length+'</b><span>Total alojamientos</span></div></div>';
-    h+='<h2>🟢 Entradas de hoy</h2>'+(lleg.length?lleg.map(function(p){return fichaHoy(p,true)}).join(""):'<div class="mut">Ninguna</div>');
-    h+='<h2>🟠 Salidas de hoy</h2>'+(sal.length?sal.map(function(p){return fichaHoy(p,false)}).join(""):'<div class="mut">Ninguna</div>');
+    var pendL=lleg.filter(function(p){return !LLEG[p.apartamento]}), yaL=lleg.filter(function(p){return LLEG[p.apartamento]});
+    h+='<h2>🟢 Entradas de hoy ('+pendL.length+' por llegar)</h2>'+(pendL.length?porEdificio(pendL,function(p){return fichaHoy(p,true)}):'<div class="mut">'+(lleg.length?'Todos han llegado 🎉':'Ninguna')+'</div>');
+    if(yaL.length) h+='<details><summary class="mut" style="margin:8px 0">✔ Ya han llegado ('+yaL.length+')</summary>'+yaL.map(function(p){var x=LLEG[p.apartamento],id=p.apartamento.replace(/\s/g,"_");return '<div class="card" style="opacity:.6">✔ <b>'+esc(p.apartamento)+'</b> · '+esc(p.edificio||"")+' · '+hora(x.hora)+' ('+esc(x.por||"")+') <button class="btn s" onclick="marcarLlegada(\''+id+'\',true)">Deshacer</button></div>'}).join("")+'</details>';
+    h+='<h2>🟠 Salidas de hoy</h2>'+(sal.length?porEdificio(sal,function(p){return fichaHoy(p,false)}):'<div class="mut">Ninguna</div>');
     var ed={}; D.pisos.forEach(function(p){(ed[p.edificio||"Otros"]=ed[p.edificio||"Otros"]||[]).push(p)});
     h+='<h2>🏢 Estado de todos los alojamientos</h2>';
     Object.keys(ed).forEach(function(k){h+='<div class="mut" style="margin:10px 0 4px;font-weight:600">'+esc(k)+'</div><div class="grid">'+ed[k].map(pisoHTML).join("")+'</div>'});
