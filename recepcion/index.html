@@ -81,6 +81,7 @@ a{color:var(--acc)}
   <button data-t="manana">Mañana</button>
   <button data-t="traspaso">Traspaso</button>
   <button data-t="reservas">Reservas</button>
+  <button data-t="apartamentos">🏠 Apartamentos</button>
   <button data-t="equipo">Limpieza y mantenimiento</button>
   <button data-t="sierra">Nieve y carretera</button>
 </nav>
@@ -147,6 +148,7 @@ function pintar(){
     h+='<h2>🏢 Estado de todos los alojamientos</h2>';
     Object.keys(ed).forEach(function(k){h+='<div class="mut" style="margin:10px 0 4px;font-weight:600">'+esc(k)+'</div><div class="grid">'+ed[k].map(pisoHTML).join("")+'</div>'});
   }
+  if(tab==="apartamentos"){ h+='<div id="aps"><div class="mut">Cargando…</div></div>'; a.innerHTML=h; cargarAps(); return; }
   if(tab==="activar"){ h+='<div id="act"><div class="mut">Cargando…</div></div>'; a.innerHTML=h; cargarActivar(); return; }
   if(tab==="manana"){
     h+='<h2>🟢 Llegan mañana</h2>'+(D.llegadas_manana.length?D.llegadas_manana.map(function(x){return '<div class="card"><b>'+esc(x.apartamento)+'</b> · '+x.noches+' noche(s) · hora: '+(x.hora?esc(x.hora):'<span style="color:var(--warn)">⏳ Claude se la está preguntando al cliente</span>')+'</div>'}).join(""):'<div class="mut">Nadie</div>');
@@ -187,6 +189,23 @@ function pintar(){
     h+='<div class="alert w">🟠 Recomendar SIEMPRE traer cadenas (tela o hierro). Con nevadas la Guardia Civil no deja subir sin cadenas, aunque lleven neumáticos de invierno. Nosotros no salimos a ayudar en carretera.</div><div class="alert i">🚧 Hay obras: Google Maps solo hasta el cruce de la Zona Alta; allí derecha (curva cerrada) y recto, y a los 3–5 min desvío a la derecha con cartel ZONA ALTA.</div><button class="btn" onclick="preguntar(\'Dame el parte de nieve y el estado de la carretera de hoy\')">Pedir parte al asistente</button>';
   }
   a.innerHTML=h;
+}
+var APS=null;
+async function cargarAps(){
+  var box=document.getElementById("aps");
+  try{ if(!APS) APS=await rpc("rec_apartamentos",{}); }catch(e){ box.innerHTML='<div class="alert b">'+esc(msgErr(e))+'</div>'; return; }
+  var h='<div class="alert i">🏢 Ordenados por edificio y nombre. <u><b>Subrayados</b></u> = apartamentos de Loto (propios). <b>Plazas</b> = las de plataforma (las que se ponen en ICNEA). <b>Reales</b> = las que caben por camas en los nuestros: solo en venta directa nuestra y <b>de palabra</b>; en ICNEA siempre las de plataforma.</div><input id="fa" placeholder="🔎 Buscar apartamento, edificio o parking…" oninput="filtrarAps()" style="margin-bottom:10px"><div id="tla"></div>';
+  box.innerHTML=h; filtrarAps();
+}
+function filtrarAps(){
+  var q=(document.getElementById("fa").value||"").toLowerCase(), ed={};
+  APS.filter(function(x){return !q||JSON.stringify(x).toLowerCase().indexOf(q)>=0}).forEach(function(x){(ed[x.edificio||"Otros"]=ed[x.edificio||"Otros"]||[]).push(x)});
+  var h="";
+  Object.keys(ed).forEach(function(k){
+    h+='<h2>'+esc(k)+'</h2><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="text-align:left"><th>Apartamento</th><th>Planta</th><th>Puerta</th><th>Parking</th><th>Plazas</th><th>Reales</th><th>Camas</th><th>WiFi (router/repetidor y clave)</th></tr>'+
+    ed[k].map(function(x){return '<tr style="border-top:1px solid var(--line,#ddd)"><td>'+(x.propio?'<u><b>'+esc(x.id)+'</b></u>':esc(x.id))+(x.mascotas?' 🐶':'')+'</td><td>'+esc(x.planta||"")+'</td><td>'+esc(x.puerta||"")+'</td><td>'+esc(x.parking||"")+'</td><td><b>'+(x.plazas==null?"?":x.plazas)+'</b></td><td>'+(x.propio&&x.plazas_reales?x.plazas_reales:"—")+'</td><td class="mut">'+esc(x.camas||"")+(x.altillo?' · altillo':'')+'</td><td class="mut">'+esc((x.wifi||"").replace(/^📶\s*/,""))+'</td></tr>'}).join("")+'</table></div>';
+  });
+  document.getElementById("tla").innerHTML=h||'<div class="mut">Nada</div>';
 }
 function formReserva(r){
   var aps=D.pisos.map(function(p){return '<option'+(p.apartamento===r.apartamento?' selected':'')+'>'+esc(p.apartamento)+'</option>'}).join("");
