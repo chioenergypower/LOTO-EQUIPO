@@ -194,7 +194,7 @@ var APS=null;
 async function cargarAps(){
   var box=document.getElementById("aps");
   try{ if(!APS) APS=await rpc("rec_apartamentos",{}); }catch(e){ box.innerHTML='<div class="alert b">'+esc(msgErr(e))+'</div>'; return; }
-  var h='<div class="alert i">🏢 Ordenados por edificio y nombre. <u><b>Subrayados</b></u> = apartamentos de Loto (propios). <b>Plazas</b> = las de plataforma (las que se ponen en ICNEA). <b>Reales</b> = las que caben por camas en los nuestros: solo en venta directa nuestra y <b>de palabra</b>; en ICNEA siempre las de plataforma.</div><input id="fa" placeholder="🔎 Buscar apartamento, edificio o parking…" oninput="filtrarAps()" style="margin-bottom:10px"><div id="tla"></div>';
+  var h='<div class="alert i">🏢 Ordenados por edificio y nombre. <u><b>Subrayados</b></u> = apartamentos de Loto (propios). <b>Plazas</b> = las de plataforma (las que se ponen en ICNEA). <b>Reales</b> = las que caben por camas en los nuestros: solo en venta directa nuestra y <b>de palabra</b>; en ICNEA siempre las de plataforma.</div><div class="alert w">🔑 Los códigos de cajetín son solo para vosotros: al cliente se le dan únicamente en las instrucciones de llegada (o el día que llega). Nunca a otros clientes, a limpieza por WhatsApp ni en notas.</div><input id="fa" placeholder="🔎 Buscar apartamento, edificio o parking…" oninput="filtrarAps()" style="margin-bottom:10px"><div id="tla"></div>';
   box.innerHTML=h; filtrarAps();
 }
 function filtrarAps(){
@@ -202,8 +202,8 @@ function filtrarAps(){
   APS.filter(function(x){return !q||JSON.stringify(x).toLowerCase().indexOf(q)>=0}).forEach(function(x){(ed[x.edificio||"Otros"]=ed[x.edificio||"Otros"]||[]).push(x)});
   var h="";
   Object.keys(ed).forEach(function(k){
-    h+='<h2>'+esc(k)+'</h2><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="text-align:left"><th>Apartamento</th><th>Planta</th><th>Puerta</th><th>Parking</th><th>Plazas</th><th>Reales</th><th>Camas</th><th>WiFi (router/repetidor y clave)</th></tr>'+
-    ed[k].map(function(x){return '<tr style="border-top:1px solid var(--line,#ddd)"><td>'+(x.propio?'<u><b>'+esc(x.id)+'</b></u>':esc(x.id))+(x.mascotas?' 🐶':'')+'</td><td>'+esc(x.planta||"")+'</td><td>'+esc(x.puerta||"")+'</td><td>'+esc(x.parking||"")+'</td><td><b>'+(x.plazas==null?"?":x.plazas)+'</b></td><td>'+(x.propio&&x.plazas_reales?x.plazas_reales:"—")+'</td><td class="mut">'+esc(x.camas||"")+(x.altillo?' · altillo':'')+'</td><td class="mut">'+esc((x.wifi||"").replace(/^📶\s*/,""))+'</td></tr>'}).join("")+'</table></div>';
+    h+='<h2>'+esc(k)+'</h2><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="text-align:left"><th>Apartamento</th><th>Planta</th><th>Puerta</th><th>Parking</th><th>🔑 Cajetín · código</th><th>Plazas</th><th>Reales</th><th>Camas</th><th>WiFi (router/repetidor y clave)</th></tr>'+
+    ed[k].map(function(x){return '<tr style="border-top:1px solid var(--line,#ddd)"><td>'+(x.propio?'<u><b>'+esc(x.id)+'</b></u>':esc(x.id))+(x.mascotas?' 🐶':'')+'</td><td>'+esc(x.planta||"")+'</td><td>'+esc(x.puerta||"")+'</td><td>'+esc(x.parking||"")+'</td><td><b>'+(x.cajetin?'nº '+esc(x.cajetin)+' · ':'')+esc(x.codigo||"—")+'</b></td><td><b>'+(x.plazas==null?"?":x.plazas)+'</b></td><td>'+(x.propio&&x.plazas_reales?x.plazas_reales:"—")+'</td><td class="mut">'+esc(x.camas||"")+(x.altillo?' · altillo':'')+'</td><td class="mut">'+esc((x.wifi||"").replace(/^📶\s*/,""))+'</td></tr>'}).join("")+'</table></div>';
   });
   document.getElementById("tla").innerHTML=h||'<div class="mut">Nada</div>';
 }
