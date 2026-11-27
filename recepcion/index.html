@@ -104,6 +104,9 @@ a{color:var(--acc)}
 <script src="../config.js"></script>
 <script src="../api.js"></script>
 <script>
+var APPV="2026-11-27-1332";
+async function verVersion(){try{var t=await (await fetch(location.pathname+"?nc="+Date.now(),{cache:"no-store"})).text();var m=t.match(/var APPV="([^"]+)"/);if(m&&m[1]!==APPV){location.replace(location.pathname+"?v="+encodeURIComponent(m[1])+location.hash)}}catch(e){}}
+verVersion();setInterval(verVersion,120000);
 var D=null, tab="hoy", HIST=[];
 var NOMBRES={limpio:"🟢 Limpio",listo_para_entrar:"🟢 Listo · entra hoy",libre:"⚪ Libre",ocupado:"🔵 Ocupado",por_limpiar:"🔴 Por limpiar",limpiando:"🟠 Limpiando",bloqueado:"⛔ Cerrado"};
 var ERR={enlace_no_valido:"Tu enlace no es válido. Pide uno nuevo a Chio.",solo_recepcion:"Este enlace no es de recepción.",falta_email:"🔴 Sin email no hay reserva.",faltan_datos:"Faltan nombre o teléfono.",fechas_no_validas:"Revisa las fechas.",supera_plazas:"🔴 Supera las plazas de la Junta de ese piso.",no_disponible:"🔴 Ese piso ya no está libre en esas fechas.",sin_conexion:"Sin conexión. Reintenta."};
